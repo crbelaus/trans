@@ -28,6 +28,6 @@ defmodule Trans.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [{:postgrex, "~> 0.11.1"},
-     {:ecto, "~> 2.0.0-rc.5"}]
+     {:ecto, "~> 1.1.7"}]
   end
 end
