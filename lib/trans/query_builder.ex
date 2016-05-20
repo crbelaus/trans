@@ -8,10 +8,10 @@ defmodule Trans.QueryBuilder do
     with_translations(query, to_string(locale), opts)
   end
 
-  def with_translations(query, locale, opts) do
-    translation_container = opts[:container] || :translations
+  def with_translations(query, locale, opts) when is_binary(locale) do
+    translations_container = opts[:container] || :translations
     from translatable in query,
-      where: fragment("(?->>?) is not null", field(translatable, ^translation_container), ^locale)
+      where: fragment("(?->>?) is not null", field(translatable, ^translations_container), ^locale)
   end
 
 end
