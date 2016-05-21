@@ -14,49 +14,37 @@ defmodule Trans.QueryBuilder do
       where: fragment("(?->>?) is not null", field(translatable, ^translations_container), ^locale)
   end
 
-  def with_translation_matching(query, locale, field, expected, opts \\ [])
+  # TODO with_translation
+  def with_translation(query, locale, field, expected, opts \\ [])
 
-  # TODO add documentation
-  def with_translation_matching(query, locale, field, expected, opts)
+  def with_translation(query, locale, field, expected, opts)
   when is_atom(locale) or is_atom(field) do
-    with_translation_matching(query, to_string(locale), to_string(field), expected, opts)
+    with_translation(query, to_string(locale), to_string(field), expected, opts)
   end
 
-  def with_translation_matching(query, locale, field, expected, opts)
+  def with_translation(query, locale, field, expected, opts)
   when is_binary(locale) and is_binary(field) do
-    translations_container = opts[:container] || :translations
+    container = opts[:container] || :translations
+    case opts[:type] do
+      :like -> with_translation_like(query, locale, field, expected, container)
+      :ilike -> with_translation_ilike(query, locale, field, expected, container)
+      _ -> with_translation_matching(query, locale, field, expected, container)
+    end
+  end
+
+  defp with_translation_matching(query, locale, field, expected, container) do
     from translatable in query,
-      where: fragment("?->?->>?", field(translatable, ^translations_container), ^locale, ^field) == ^expected
+      where: fragment("?->?->>?", field(translatable, ^container), ^locale, ^field) == ^expected
   end
 
-  # TODO add documentation
-  def with_translation_like(query, locale, field, pattern, opts \\ [])
-
-  def with_translation_like(query, locale, field, pattern, opts)
-  when is_atom(locale) or is_atom(field) do
-    with_translation_like(query, to_string(locale), to_string(field), pattern, opts)
-  end
-
-  def with_translation_like(query, locale, field, pattern, opts)
-  when is_binary(locale) and is_binary(field) do
-    translations_container = opts[:container] || :translations
+  defp with_translation_like(query, locale, field, expected, container) do
     from translatable in query,
-      where: like(fragment("?->?->>?", field(translatable, ^translations_container), ^locale, ^field), ^pattern)
+      where: like(fragment("?->?->>?", field(translatable, ^container), ^locale, ^field), ^expected)
   end
 
-  # TODO add documentation
-  def with_translation_ilike(query, locale, field, pattern, opts \\ [])
-
-  def with_translation_ilike(query, locale, field, pattern, opts)
-  when is_atom(locale) or is_atom(field) do
-    with_translation_ilike(query, to_string(locale), to_string(field), pattern, opts)
-  end
-
-  def with_translation_ilike(query, locale, field, pattern, opts)
-  when is_binary(locale) and is_binary(field) do
-    translations_container = opts[:container] || :translations
+  def with_translation_ilike(query, locale, field, expected, container) do
     from translatable in query,
-      where: ilike(fragment("?->?->>?", field(translatable, ^translations_container), ^locale, ^field), ^pattern)
+      where: ilike(fragment("?->?->>?", field(translatable, ^container), ^locale, ^field), ^expected)
   end
 
 
