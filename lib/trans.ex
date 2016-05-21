@@ -9,13 +9,13 @@ defmodule Trans do
       # Wrapper of Trans.QueryBuilder.with_translations/3
       def with_translations(query, locale, opts \\ []) do
         Trans.QueryBuilder.with_translations(query, locale,
-          opts ++ [container: unquote(@translations_container)])
+          opts ++ [container: @translations_container])
       end
 
       # Wrapper of Trans.QueryBuilder.with_translations
       def with_translation(query, locale, field, expected, opts \\ []) do
         Trans.QueryBuilder.with_translation(query, locale, field, expected,
-          opts ++ [container: unquote(@translations_container)])
+          opts ++ [container: @translations_container])
       end
 
     end
