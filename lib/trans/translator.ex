@@ -8,7 +8,7 @@ defmodule Trans.Translator do
                             {:ok, translated_field} <- Map.fetch(translations_for_locale, to_string(field)),
       do: translated_field
     case translated_field do
-      :error -> Map.fetch(struct, field) # Fallback to the default value
+      :error -> Map.fetch!(struct, field) # Fallback to the default value
       _ -> translated_field # Return the translated value
     end
   end
