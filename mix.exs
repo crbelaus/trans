@@ -30,7 +30,8 @@ defmodule Trans.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [{:postgrex, "~> 0.11.1"},
-     {:ecto, "~> 1.1.7"}]
+     {:ecto, "~> 1.1.7"},
+     {:poison, "~> 2.1"}]
   end
 
   # Include Ecto and Postgrex applications in tests
