@@ -1,6 +1,7 @@
 # What is Trans?
 
 Trans is a library that helps you managing embedded model translations.
+Trans is inspired by the great [hstore translate](https://github.com/Leadformance/hstore_translate) gem for Ruby.
 
 ## Why Trans?
 
@@ -19,10 +20,9 @@ Trans is lightweight and modularized. The main functionality is provided by the 
 
 ### Adding translations to a model
 
-The first step consists on adding a new column to the desired table.
+The first step consists on adding a new column to the desired table. This column will be known as the **translation container**.
 
 ```elixir
-
 defmodule MyApp.Repo.Migrations.AddTranslationsColumn do
   use Ecto.Migration
 
@@ -32,13 +32,11 @@ defmodule MyApp.Repo.Migrations.AddTranslationsColumn do
     end
   end
 end
-
 ```
 
 The model's schema must be also updated, so it can be mapped by Ecto.
 
 ```elixir
-
 defmodule MyApp.Article do
   use Ecto.Schema
 
@@ -50,7 +48,6 @@ defmodule MyApp.Article do
     field :translations, :map # This field will contain our translations
   end
 end
-
 ```
 
 ### Using helper functions
@@ -71,19 +68,14 @@ that will be automatically passed to `Trans.Translator` and `Trans.QueryBuilder`
 You can use the `Trans` module in your model like this:
 
 ```elixir
-
 defmodule MyApp.Article do
-
-  ...
-
+  # ...
   use Trans, container: :translations
-
-  ...
-
+  # ...
 end
-
-
 ```
+
+If our translations container field is called `translations`, we can omit the `container: :translations` option.
 
 ### Storing translations
 
@@ -109,25 +101,18 @@ article = Repo.insert!(changeset)
 
 ### Querying translations
 
-We may need to get articles that are translated to a certain language. To do this we may
+We may need to get articles that are translated into a certain language. To do this we may
 use the `Trans.QueryBuilder.with_translations/3` function (or the helper provided by `Trans` in our model).
 
 ```elixir
-
 articles_translated_to_spanish = Article |> Article.with_translations(:es) |> Repo.all
-
-# Trigger the following query:
 # SELECT a0."id", a0."title", a0."body", a0."translations", a0."author" FROM "articles" AS a0 WHERE (a0."translations"->>$1) is not null) ["es"] OK query=17.1ms queue=0.1ms
-
 ```
 
 We may also want to get articles for which their french title contains "Trans".
 
-```
-
+```elixir
 articles = Article |> Article.with_translation(:fr, :title, "%Trans%", type: :like)
-
-# Trigges the following query:
 # [debug] SELECT a0."id", a0."title", a0."body", a0."translations", a0."author" FROM "articles" AS a0 WHERE (a0."translations"->$1->>$2 LIKE $3) ["fr", "title", "%Trans%"] OK query=2.1ms queue=0.1ms
 ```
 
@@ -139,28 +124,22 @@ The `Trans.QueryBuilder.with_translation/5` function supports three types of com
 
 ### Translating fields
 
-When we have a model struct, we can use the `Trans.Translator/3` function to easily load
+When we have a model struct, we can use the `Trans.Translator.translate/3` (or the equivalent helper provided by `Trans`) function to easily load
 a certain translation.
 
 ```elixir
-
 Article.translate(article, :es, :body) # "Disertación sobre la genialidad de Trans"
-
 ```
 
 The `Trans.Translator.translate/3` function also provides a fallback mechanism for when
 non existant translations are accessed:
 
 ```elixir
-
-Article.translate(article, :de, :title) # Fallback to the untranslated value "Why Trans is great"
-
+Article.translate(article, :de, :title) # Fallback to untranslated value: "Why Trans is great"
 ```
 
 Since the translation container is a simple map, we can always access its values manually:
 
 ```elixir
-
 article.translations["es"]["body"] # "Disertación sobre la genialidad de Trans"
-
 ```
