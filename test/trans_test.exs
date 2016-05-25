@@ -73,14 +73,14 @@ defmodule TransTest do
     article = Article
     |> Article.with_translation(:es, :body, "%es", type: :ilike)
     |> TestRepo.one
-    assert Translator.translate(article, :body, locale: :fr) == "body FR"
+    assert Translator.translate(article, :fr, :body) == "body FR"
   end
 
   test "translate existing attribute to non-existing locale fallbacks to default" do
     article = Article
     |> Article.with_translation(:es, :body, "%es", type: :ilike)
     |> TestRepo.one
-    assert Translator.translate(article, :body, locale: :uk) == "Body of the article with translations"
+    assert Translator.translate(article, :uk, :body) == "Body of the article with translations"
   end
 
   test "raise KeyError when translating non-existing attribute" do
