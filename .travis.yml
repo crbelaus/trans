@@ -5,3 +5,5 @@ otp_release:
   18.3
 addons:
   postgresql: "9.5"
+before_script:
+  cp config/test.travis.exs config/test.exs
