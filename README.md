@@ -3,6 +3,10 @@
 Trans is a library that helps you managing embedded model translations.
 Trans is inspired by the great [hstore translate](https://github.com/Leadformance/hstore_translate) gem for Ruby.
 
+*IMPORTANT*: for the moment, *Trans query building works only with PostgreSQL*, since the queries use
+the special operators for JSONB. Keep this in mind if you want to find models filtering from translated
+attributes.
+
 ## Why Trans?
 
 The traditional approach to content internationalization consists of using an additional
