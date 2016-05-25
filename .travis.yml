@@ -6,7 +6,7 @@ otp_release:
 addons:
   postgresql: "9.4"
 before_script:
-  cp config/test.travis.exs config/test.exs
-  mix deps.get
+  - cp config/test.travis.exs config/test.exs
+  - mix deps.get
 script:
-  mix test
+  - mix test
