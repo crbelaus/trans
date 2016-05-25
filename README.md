@@ -128,7 +128,7 @@ The `Trans.QueryBuilder.with_translation/5` function supports three types of com
 
 ### Translating fields
 
-When we have a model struct, we can use the `Trans.Translator.translate/3` (or the equivalent helper provided by `Trans`) function to easily load
+When we have a model struct, we can use the `Trans.Translator.translate/4` (or the equivalent helper provided by `Trans`) function to easily load
 a certain translation.
 
 ```elixir
