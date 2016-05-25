@@ -3,3 +3,5 @@ elixir:
   - 1.2.5
 otp_release:
   18.3
+addons:
+  postgresql: "9.5"
