@@ -1,8 +1,7 @@
 defmodule Trans.Translator do
 
-  def translate(struct, field, opts \\ []) when is_map(struct) do
+  def translate(struct, locale, field, opts \\ []) when is_map(struct) do
     translation_container = opts[:container] || :translations
-    locale = opts[:locale] # TODO Maybe get from gettext?
     translated_field = with {:ok, all_translations} <- Map.fetch(struct, translation_container),
                             {:ok, translations_for_locale} <- Map.fetch(all_translations, to_string(locale)),
                             {:ok, translated_field} <- Map.fetch(translations_for_locale, to_string(field)),
