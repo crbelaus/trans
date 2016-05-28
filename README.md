@@ -75,12 +75,18 @@ You can use the `Trans` module in your model like this:
 ```elixir
 defmodule MyApp.Article do
   # ...
-  use Trans, container: :translations
+  use Trans, translates: [:title, :body], defaults: [container: :translations]
   # ...
 end
 ```
 
-If our translations container field is called `translations`, we can omit the `container: :translations` option.
+We *must* define the list of translatable fields for the model, otherwise Trans
+will raise an error during compilation.
+
+We can also provide a list of default options that will be automatically passed
+in the convenience functions. In the example, we are specifying the translation
+container of the model (by default Trans looks for a container called `translations`
+so we could omit it in the example).
 
 ### Storing translations
 
