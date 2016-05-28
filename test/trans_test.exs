@@ -14,7 +14,7 @@ defmodule TransTest do
     attrs_w_translations = %{
       title: "Title of the article with translations",
       body: "Body of the article with translations",
-      translations: %{
+      test_translation_container: %{
         "es": %{"title": "title ES", "body": "body ES"},
         "fr": %{"title": "title FR", "body": "body FR"}
       }
@@ -73,7 +73,7 @@ defmodule TransTest do
     article = Article
     |> Article.with_translation(:es, :body, "%es", type: :ilike)
     |> TestRepo.one
-    assert Translator.translate(article, :fr, :body) == "body FR"
+    assert Translator.translate(article, :fr, :body, container: :test_translation_container) == "body FR"
   end
 
   test "translate existing attribute to non-existing locale fallbacks to default" do
