@@ -92,4 +92,12 @@ defmodule TransTest do
     end
   end
 
+  test "raise ArgumentError when querying by non-translatable attribute" do
+    assert_raise ArgumentError, ~r/not declared as translatable/, fn ->
+      Article
+      |> Article.with_translation(:es, :fake_attribute, "I don't exist")
+      |> TestRepo.one
+    end
+  end
+
 end
