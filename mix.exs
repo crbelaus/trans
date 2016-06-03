@@ -3,12 +3,14 @@ defmodule Trans.Mixfile do
 
   def project do
     [app: :trans,
-     version: "0.0.1",
+     version: "0.1.0",
      elixir: "~> 1.2",
+     description: "Embedded translations for Elixir",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      elixirc_paths: elixirc_paths(Mix.env),
      app_list: app_list(Mix.env),
+     package: package,
      deps: deps]
   end
 
@@ -32,6 +34,14 @@ defmodule Trans.Mixfile do
     [{:postgrex, "~> 0.11.1"},
      {:ecto, "~> 1.1.7"},
      {:poison, "~> 2.1"}]
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"],
+      maintainers: ["Cristian Álvarez Belaustegui"],
+      links: %{"GitHub" => "https://github.com/belaustegui/trans"}
+    ]
   end
 
   # Include Ecto and Postgrex applications in tests
