@@ -1,4 +1,33 @@
 defmodule Trans do
+  @moduledoc """
+  Trans is split into 2 main components:
+
+  * `Trans.Translator`: provides functions for obtaining translated values from
+  a module.
+  * `Trans.QueryBuilder`: provides functions for finding modules by translated
+  values.
+
+  Take a look at the documentation of those modules to see what functions they
+  provide.
+
+  ## Usage
+
+  You can use this module in each of your model modules like this:
+
+      use Trans, translates: [:field1, :field2], defaults: [...]
+
+  By using `Trans` you can set up convenience functions to avoid unnecesary
+  repetition of default options. For example, your model may use a translation
+  container with a different name than the default `translations`. In this case
+  you would need to specify the translation container in each call to
+  `Trans.QueryBuilder`. By using the `Trans` module you can specify a list of
+  default options that will be automatically applied to those modules.
+
+  When using `Trans`, two main functions will be set up in your module:
+  `with_translations` and `with_translation`. Those two functions call their
+  respectives in the `Trans.QueryBuilder` module, but automatically passing
+  the `defaults` specified when using `Trans`.
+  """
 
   defmacro __using__(opts) do
     setup_convenience_functions(get_defaults(opts), get_translatables(opts))
