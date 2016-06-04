@@ -1,0 +1,235 @@
+    <!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.11.5">
+    <title>Trans.Translator – trans v0.1.0</title>
+    <link rel="stylesheet" href="dist/app-ddd9717ad9.css" />
+    
+      <link rel="canonical" href="https://hexdocs.pm/trans/Trans.Translator.html" />
+    
+    <script src="dist/sidebar_items.js"></script>
+  </head>
+  <body data-type="modules">
+
+    <div class="main">
+<button class="sidebar-toggle">
+  <i class="icon-menu"></i>
+</button>
+<section class="sidebar">
+  <button class="sidebar-toggle">
+    <i class="icon-menu"></i>
+  </button>
+
+  
+  <a href="api-reference.html" class="sidebar-projectLink">
+    <div class="sidebar-projectDetails">
+      <h1 class="sidebar-projectName">
+        trans
+      </h1>
+      <h2 class="sidebar-projectVersion">
+        v0.1.0
+      </h2>
+    </div>
+    
+  </a>
+
+  <div class="sidebar-search">
+    <i class="icon-search"></i>
+    <input type="text" class="sidebar-searchInput" placeholder="search" autocomplete="off" />
+  </div>
+
+  <ul class="sidebar-listNav">
+    <li><a id="extras-list" href="#full-list">Pages</a></li>
+
+    
+      <li><a id="modules-list" href="#full-list">Modules</a></li>
+    
+
+    
+
+    
+  </ul>
+
+  <ul id="full-list" class="sidebar-fullList"></ul>
+  <div class="sidebar-noResults"></div>
+</section>
+
+<section class="content">
+  <div id="content" class="content-inner">
+
+
+      <h1>
+        <small class="visible-xs">trans v0.1.0</small>
+        Trans.Translator
+        
+        
+      </h1>
+
+      
+        <section id="moduledoc" class="docstring">
+          <p>Provides functions to access translated fiels in a model. Take a
+look at the <a href="Trans.html"><code class="inline">Trans</code></a> module documentation to see how you can set up convenience
+helpers in your model module to avoid repetition of default values.</p>
+
+        </section>
+      
+
+      
+        <section id="summary" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#summary">
+              <i class="icon-link"></i>
+            </a>
+            Summary
+          </h1>
+          
+
+          
+  <div class="summary-functions summary">
+    <h2>
+      <a href="#functions">Functions</a>
+    </h2>
+    <div class="summary-row">
+  <div class="summary-signature">
+    <a href="#translate/4">translate(struct, locale, field, opts \\ [])</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Returns the translated value for the given locale and field. If the field is
+not translated into the given locale, fallbacks to the default one</p>
+</div>
+  
+</div>
+
+  </div>
+
+
+          
+
+          
+
+        </section>
+      
+
+      
+
+      
+        <section id="functions" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#functions">
+              <i class="icon-link"></i>
+            </a>
+            Functions
+          </h1>
+          <div class="detail" id="translate/4">
+  <div class="detail-header">
+    <a href="#translate/4" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">translate(struct, locale, field, opts \\ [])</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Returns the translated value for the given locale and field. If the field is
+not translated into the given locale, fallbacks to the default one.</p>
+<p>Take a look at the <a href="Trans.html"><code class="inline">Trans</code></a> module to see how you can set up convenience functions
+to access the translated values from your model module and avoid repetition of
+defaul options.</p>
+<h2>Usage example</h2>
+<p>Suppose that we have an article model which has a title and a body fields, both
+fields can be translated.</p>
+<pre><code class="elixir">defmodule Trans.Article do
+  use Ecto.Schema
+
+  schema &quot;articles&quot; do
+    field :title, :string
+    field :body, :string
+    field :translations, :map
+  end
+
+end</code></pre>
+<p>We have an article translated to spanish.</p>
+<pre><code class="iex elixir">iex&gt; changeset = Article.changeset(%Article{}, %{
+    title: &quot;Title in the default locale&quot;,
+    body: &quot;Body in the default locale&quot;,
+    translations: %{
+      &quot;es&quot; =&gt; %{title: &quot;Title in Spanish&quot;, body: &quot;Body in Spanish&quot;}
+    }
+  })
+iex&gt; article = Repo.insert!(changeset)
+%Article{...}</code></pre>
+<p>We can then get the title translated to Spanish:</p>
+<pre><code class="iex elixir">iex&gt; Trans.Translator.translate(article, :es, :title)
+&quot;Title in Spanish&quot;</code></pre>
+<p>If we try to get the title translated in a different locale, <a href="Trans.html"><code class="inline">Trans</code></a> will
+automatically fallback to the default value</p>
+<pre><code class="iex elixir">iex&gt; Trans.Translator.translate(article, :fr, :title)
+&quot;Title in the default locale&quot;</code></pre>
+<h2>Translation container</h2>
+<p>The translation container is the field that contains the translations of other
+fields. By default, this function will look for translations into a field named
+<code class="inline">translations</code>.  If you use a different container you can also specify it so
+the translations are looked up correctly.</p>
+<p>Suppose we have an article model like the one we had in the first example, but
+this time we are storing the translations in the <code class="inline">my_translation_container</code>
+field:</p>
+<pre><code class="elixir">defmodule Trans.Article do
+  use Ecto.Schema
+
+  schema &quot;articles&quot; do
+    field :title, :string
+    field :body, :string
+    field :my_translation_container, :map
+  end
+
+end</code></pre>
+<p>We have an article translated to spanish.</p>
+<pre><code class="iex elixir">iex&gt; changeset = Article.changeset(%Article{}, %{
+    title: &quot;Title in the default locale&quot;,
+    body: &quot;Body in the default locale&quot;,
+    my_translation_container: %{
+      &quot;es&quot; =&gt; %{title: &quot;Title in Spanish&quot;, body: &quot;Body in Spanish&quot;}
+    }
+  })
+iex&gt; article = Repo.insert!(changeset)
+%Article{...}</code></pre>
+<p>We can translate any field as usual. Since the translation container is not
+the default one, it needs to be explicitly specified.</p>
+<pre><code class="iex elixir">iex&gt; Trans.Translator.translate(article, :es, :title, container: :my_translation_container)
+&quot;Title in Spanish&quot;</code></pre>
+<p>When we want to translate multiple fields, having to pass the translation
+container name everytime can be a little bit tedious. You can avoid this
+repetition by using the <a href="Trans.html"><code class="inline">Trans</code></a> module in your own module module.</p>
+
+  </section>
+</div>
+
+        </section>
+      
+
+      
+
+      
+        <footer class="footer">
+      <p>
+        <span class="line">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" rel="help" target="_blank">ExDoc</a> (v0.11.5),
+        </span>
+        <span class="line">
+          designed by
+          <a href="https://twitter.com/dignifiedquire" target="_blank" title="@dignifiedquire">Friedel Ziegelmayer</a>.
+          </span>
+      </p>
+      <button class="night-mode-toggle" />
+    </footer>
+  </div>
+</section>
+</div>
+  <script src="dist/app-918614602f.js"></script>
+  </body>
+</html>
+

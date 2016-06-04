@@ -8,6 +8,8 @@ Trans is inspired by the great [hstore translate](https://github.com/Leadformanc
 the special operators for JSONB. Keep this in mind if you want to find models filtering from translated
 attributes.
 
+Trans is published on [hex.pm](https://hex.pm/packages/trans). The documentation is also [available online](https://hexdocs.pm/trans/).
+
 ## Why Trans?
 
 The traditional approach to content internationalization consists of using an additional
