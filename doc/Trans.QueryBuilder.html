@@ -1,0 +1,300 @@
+    <!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.11.5">
+    <title>Trans.QueryBuilder – trans v0.1.0</title>
+    <link rel="stylesheet" href="dist/app-ddd9717ad9.css" />
+    
+      <link rel="canonical" href="https://hexdocs.pm/trans/Trans.QueryBuilder.html" />
+    
+    <script src="dist/sidebar_items.js"></script>
+  </head>
+  <body data-type="modules">
+
+    <div class="main">
+<button class="sidebar-toggle">
+  <i class="icon-menu"></i>
+</button>
+<section class="sidebar">
+  <button class="sidebar-toggle">
+    <i class="icon-menu"></i>
+  </button>
+
+  
+  <a href="api-reference.html" class="sidebar-projectLink">
+    <div class="sidebar-projectDetails">
+      <h1 class="sidebar-projectName">
+        trans
+      </h1>
+      <h2 class="sidebar-projectVersion">
+        v0.1.0
+      </h2>
+    </div>
+    
+  </a>
+
+  <div class="sidebar-search">
+    <i class="icon-search"></i>
+    <input type="text" class="sidebar-searchInput" placeholder="search" autocomplete="off" />
+  </div>
+
+  <ul class="sidebar-listNav">
+    <li><a id="extras-list" href="#full-list">Pages</a></li>
+
+    
+      <li><a id="modules-list" href="#full-list">Modules</a></li>
+    
+
+    
+
+    
+  </ul>
+
+  <ul id="full-list" class="sidebar-fullList"></ul>
+  <div class="sidebar-noResults"></div>
+</section>
+
+<section class="content">
+  <div id="content" class="content-inner">
+
+
+      <h1>
+        <small class="visible-xs">trans v0.1.0</small>
+        Trans.QueryBuilder
+        
+        
+      </h1>
+
+      
+        <section id="moduledoc" class="docstring">
+          <p>Provides functions to build queries with conditions on translated fields. Take
+a look at the <a href="Trans.html"><code class="inline">Trans</code></a> module documentation to see how you can set up convenience
+helpers in your model module to avoid repetition of default values.</p>
+
+        </section>
+      
+
+      
+        <section id="summary" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#summary">
+              <i class="icon-link"></i>
+            </a>
+            Summary
+          </h1>
+          
+
+          
+  <div class="summary-functions summary">
+    <h2>
+      <a href="#functions">Functions</a>
+    </h2>
+    <div class="summary-row">
+  <div class="summary-signature">
+    <a href="#with_translation/5">with_translation(query, locale, field, expected, opts \\ [])</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Adds a condition to the given query to filter only those records for which the
+field translation in the given locale matches the specified value</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#with_translation_ilike/5">with_translation_ilike(query, locale, field, expected, container)</a>
+  </div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#with_translations/3">with_translations(query, locale, opts \\ [])</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Adds a condition to the given query to filter only those models translated to
+the given locale</p>
+</div>
+  
+</div>
+
+  </div>
+
+
+          
+
+          
+
+        </section>
+      
+
+      
+
+      
+        <section id="functions" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#functions">
+              <i class="icon-link"></i>
+            </a>
+            Functions
+          </h1>
+          <div class="detail" id="with_translation/5">
+  <div class="detail-header">
+    <a href="#with_translation/5" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">with_translation(query, locale, field, expected, opts \\ [])</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Adds a condition to the given query to filter only those records for which the
+field translation in the given locale matches the specified value.</p>
+<p>Take a look at the <a href="Trans.html"><code class="inline">Trans</code></a> module to see how you can set up convenience functions
+into your model to avoid excessive repetition of default options.</p>
+<h2>Usage example</h2>
+<p>Suppose that we have an article model which has a title and a body fields, both
+of them can be translated.</p>
+<pre><code class="elixir">defmodule Article do
+  use Ecto.Schema
+
+  schema &quot;articles&quot; do
+    field :title, :string
+    field :body, :string
+    field :translations, :map
+  end
+
+end</code></pre>
+<p>We could then get only the articles for which the title in French matches
+“La République” like this:</p>
+<pre><code class="iex elixir">iex&gt; Article |&gt; Trans.QueryBuilder.with_translation(:es, :title, &quot;La République&quot;) |&gt; Repo.all
+[debug] SELECT a0.&quot;id&quot;, a0.&quot;title&quot;, a0.&quot;body&quot;, a0.&quot;translations&quot; FROM &quot;articles&quot; AS a0 WHERE (a0.&quot;translations&quot;-&gt;$1-&gt;&gt;$2 = $3) [&quot;fr&quot;, &quot;title&quot;, &quot;La République&quot;] OK query=2.6ms queue=0.1ms</code></pre>
+<p>If we want to use a comparison with wilcards, we may specify a LIKE (or ILIKE
+for case-insensitive comparison) condition:</p>
+<pre><code class="iex elixir">iex&gt; Article |&gt; Trans.QueryBuilder.with_translation(:es, :title, &quot;%République%&quot;, type: :like) |&gt; Repo.all
+[debug] SELECT a0.&quot;id&quot;, a0.&quot;title&quot;, a0.&quot;body&quot;, a0.&quot;translations&quot; FROM &quot;articles&quot; AS a0 WHERE (a0.&quot;translations&quot;-&gt;$1-&gt;&gt;$2 LIKE $3) [&quot;fr&quot;, &quot;title&quot;, &quot;%République%&quot;] OK query=2.1ms queue=0.1ms</code></pre>
+<p>We can also perform a case insensitive comparison by using a ILIKE condition:</p>
+<pre><code class="iex elixir">iex&gt; Article |&gt; Trans.QueryBuilder.with_translation(:es, :title, &quot;%république%&quot;, type: :ilike) |&gt; Repo.all
+[debug] SELECT a0.&quot;id&quot;, a0.&quot;title&quot;, a0.&quot;body&quot;, a0.&quot;translations&quot; FROM &quot;articles&quot; AS a0 WHERE (a0.&quot;translations&quot;-&gt;$1-&gt;&gt;$2 ILIKE $3) [&quot;fr&quot;, &quot;title&quot;, &quot;%république%&quot;] OK query=2.1ms queue=0.1ms</code></pre>
+<h2>Translation container</h2>
+<p>We may have some models in which translations are stored in a different column
+than the default <code class="inline">translations</code>. When our translations container is not the
+default one, it must be explicitly specified.</p>
+<p>Suppose that we have a model like the one in the previous example, but which
+stores the translations in the field <code class="inline">my_translation_container</code>:</p>
+<pre><code class="elixir">defmodule Article do
+  use Ecto.Schema
+
+  schema &quot;articles&quot; do
+    field :title, :string
+    field :body, :string
+    field :my_translation_container, :map
+  end
+
+end</code></pre>
+<p>As in the previous example, we may want to fetch all articles whose title contains
+the word “république” and perform a case insensitive operation. We also have
+to specify the translation container:</p>
+<pre><code class="iex elixir">iex&gt; Article |&gt; Trans.QueryBuilder.with_translation(:fr, :title, &quot;%république%&quot;, type: :ilike, container: :my_translation_container) |&gt; Repo.all
+[debug] SELECT a0.&quot;id&quot;, a0.&quot;title&quot;, a0.&quot;body&quot;, a0.&quot;my_translation_container&quot; FROM &quot;articles&quot; AS a0 WHERE (a0.&quot;my_translation_container&quot;-&gt;$1-&gt;&gt;$2 ILIKE $3) [&quot;fr&quot;, &quot;title&quot;, &quot;%république%&quot;] OK query=2.1ms queue=0.1ms</code></pre>
+<p>You can avoid the same repetition by using the <a href="Trans.html"><code class="inline">Trans</code></a> module in your model
+module. Take a look at the <a href="Trans.html"><code class="inline">Trans</code></a> module documentation to see how to do it.</p>
+
+  </section>
+</div>
+<div class="detail" id="with_translation_ilike/5">
+  <div class="detail-header">
+    <a href="#with_translation_ilike/5" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">with_translation_ilike(query, locale, field, expected, container)</span>
+      
+  </div>
+  
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="with_translations/3">
+  <div class="detail-header">
+    <a href="#with_translations/3" class="detail-link" title="Link to this function">
+      <i class="icon-link"></i>
+    </a>
+    <span class="signature">with_translations(query, locale, opts \\ [])</span>
+      
+  </div>
+  
+  <section class="docstring">
+    <p>Adds a condition to the given query to filter only those models translated to
+the given locale.</p>
+<p>Take a look at the <a href="Trans.html"><code class="inline">Trans</code></a> module to see how you can set up convenience functions
+in your model to avoid excessive repetition of default options.</p>
+<h2>Usage example</h2>
+<p>Suppose that we have an article model which has a title and a body fields, both
+of them can be translated.</p>
+<pre><code class="elixir">defmodule Article do
+  use Ecto.Schema
+
+  schema &quot;articles&quot; do
+    field :title, :string
+    field :body, :string
+    field :translations, :map
+  end
+
+end</code></pre>
+<p>We could then get only the articles that are translated into spanish like this:</p>
+<pre><code class="iex elixir">iex&gt; Article |&gt; Trans.QueryBuilder.with_translations(:es) |&gt; Repo.all
+[debug] SELECT a0.&quot;id&quot;, a0.&quot;title&quot;, a0.&quot;body&quot;, a0.&quot;translations&quot; FROM &quot;articles&quot; AS a0 WHERE ((a0.&quot;translations&quot;-&gt;&gt;$1) is not null) [&quot;es&quot;] OK query=4.7ms queue=0.1ms</code></pre>
+<h2>Translation container</h2>
+<p>We may have some models in which translations are stored in a different column
+than the default <code class="inline">translations</code>. When our translations container is not the
+default one, it must be explicitly specified.</p>
+<p>Suppose that we have a model like the one in the previous example, but which
+stores the translations in the field <code class="inline">my_translation_container</code>:</p>
+<pre><code class="elixir">defmodule Article do
+  use Ecto.Schema
+
+  schema &quot;articles&quot; do
+    field :title, :string
+    field :body, :string
+    field :my_translation_container, :map
+  end
+
+end</code></pre>
+<p>Then, to get only the articles that are translated into Spanish we could use
+the same technique as in the first example, but specifying the container:</p>
+<pre><code class="iex elixir">iex&gt; Article |&gt; Trans.QueryBuilder.with_translations(:es, container: :my_translation_container) |&gt; Repo.all
+[debug] SELECT a0.&quot;id&quot;, a0.&quot;title&quot;, a0.&quot;body&quot;, a0.&quot;my_translation_container&quot; FROM &quot;articles&quot; AS a0 WHERE ((a0.&quot;my_translation_container&quot;-&gt;&gt;$1) is not null) [&quot;es&quot;] OK query=4.7ms queue=0.1ms</code></pre>
+<p>You can avoid the same repetition by using the <a href="Trans.html"><code class="inline">Trans</code></a> module in your model
+module. Take a look at the <a href="Trans.html"><code class="inline">Trans</code></a> module documentation to see how to do it.</p>
+
+  </section>
+</div>
+
+        </section>
+      
+
+      
+
+      
+        <footer class="footer">
+      <p>
+        <span class="line">
+          Built using
+          <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" rel="help" target="_blank">ExDoc</a> (v0.11.5),
+        </span>
+        <span class="line">
+          designed by
+          <a href="https://twitter.com/dignifiedquire" target="_blank" title="@dignifiedquire">Friedel Ziegelmayer</a>.
+          </span>
+      </p>
+      <button class="night-mode-toggle" />
+    </footer>
+  </div>
+</section>
+</div>
+  <script src="dist/app-918614602f.js"></script>
+  </body>
+</html>
+
