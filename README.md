@@ -1,5 +1,7 @@
 # What is Trans?
-[![Build Status](https://api.travis-ci.org/belaustegui/trans.svg?branch=master)](https://travis-ci.org/belaustegui/trans)
+
+[![Travis](https://img.shields.io/travis/belaustegui/trans.svg?maxAge=2592000&&style=flat-square)](https://travis-ci.org/belaustegui/trans)
+[![Hex.pm](https://img.shields.io/hexpm/dt/trans.svg?maxAge=2592000&style=flat-square)](https://hex.pm/packages/trans)
 
 Trans is a library that helps you managing embedded model translations.
 Trans is inspired by the great [hstore translate](https://github.com/Leadformance/hstore_translate) gem for Ruby.
