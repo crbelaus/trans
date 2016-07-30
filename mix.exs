@@ -3,7 +3,7 @@ defmodule Trans.Mixfile do
 
   def project do
     [app: :trans,
-     version: "0.1.0",
+     version: "1.0.0",
      elixir: "~> 1.2",
      description: "Embedded translations for Elixir",
      build_embedded: Mix.env == :prod,
@@ -31,8 +31,8 @@ defmodule Trans.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:postgrex, "~> 0.11.1"},
-     {:ecto, "~> 1.1.7"},
+    [{:postgrex, "~> 0.11"},
+     {:ecto, "~> 2.0"},
      {:poison, "~> 2.1"},
      {:ex_doc, ">= 0.0.0", only: :dev},
      {:earmark, ">= 0.0.0", only: :dev}]
