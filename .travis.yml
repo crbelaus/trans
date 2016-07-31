@@ -5,6 +5,10 @@ elixir:
 otp_release:
   - 18.3
   - 19.0
+matrix:
+  exclude:
+    - otp_release: 19.0
+      elixir: 1.2.5
 addons:
   postgresql: "9.4"
 before_script:
