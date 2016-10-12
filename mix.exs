@@ -1,17 +1,24 @@
 defmodule Trans.Mixfile do
   use Mix.Project
 
+  @version "1.0.0"
+
   def project do
     [app: :trans,
-     version: "1.0.0",
+    version: @version,
      elixir: "~> 1.2",
-     description: "Embedded translations for Elixir",
+     description: "Embedded translations for Elixir schemas",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      elixirc_paths: elixirc_paths(Mix.env),
      app_list: app_list(Mix.env),
      package: package,
-     deps: deps]
+     deps: deps,
+     # Docs
+     name: "Trans",
+     docs: [source_ref: "v#{@version}", main: "Trans",
+            canonical: "https://hexdocs.pm/trans",
+            source_url: "https://github.com/belaustegui/trans"]]
   end
 
   # Configuration for the OTP application
