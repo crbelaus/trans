@@ -1,28 +1,26 @@
 defmodule Trans do
   @moduledoc """
   Trans provides a way to manage and query translations embedded into schemas
-  removing the necessity of maintaing extra tables that only store translations.
+  and removes the necessity of maintaing extra tables only for translation storage.
 
   Trans is split into 2 main components:
 
   * `Trans.Translator` - provides functions to easily access translated values
-  from schemas and using a fallback when the translation is not available.  **If
-  you want to get translations from a schema you should take a look at this
-  module**.
+  from schemas and fallback to a default locale when the translation does not
+  exist in the required one.  **If you want to get translations from a schema you
+  should take a look at this module**.
   * `Trans.QueryBuilder` - provides functions that can be chained in queries and
   allow filtering by translated values.  **If you want to filter queries using
   translated fields you should take a look at this module**.
 
   ## What does this package do?
 
-  **`Trans` allows you to store translations of a Struct or a Map** (from now onwards
-  we will be talking only about Structs for brevity, but remember that the
-  same applies for Maps unless is specified otherwise) **as an extra
-  field of that Struct.**
+  `Trans` allows you to store translations of a Struct as an extra field of
+  that Struct.
 
   `Trans` sees its main utility when it is used on `Ecto.Schema` modules.
-  **When paired with an `Ecto.Schema`, `Trans` allows you to keep a schema and its
-  translations on the same database table.**  This removes the necessity of
+  **When paired with an `Ecto.Schema`, `Trans` allows you to keep the schema and
+  its translations on the same database table.**  This removes the necessity of
   spreading the schema and its translations on multiple tables and reduces the
   number of required *JOINs* that must be performed on queries.
 
@@ -58,6 +56,7 @@ defmodule Trans do
   like the following example:
 
       defmodule Article do
+        use Ecto.Schema
         use Trans, translates: [:title, :body]
 
         schema "articles" do
@@ -73,8 +72,8 @@ defmodule Trans do
   and `Trans.Translator` like the following example:
 
       defmodule Article do
-        use Trans,
-          defaults: [container: :article_translations],
+        use Ecto.Schema
+        use Trans, defaults: [container: :article_translations],
           translates: [:title, :body]
 
         schema "articles" do
