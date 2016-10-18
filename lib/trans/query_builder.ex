@@ -1,67 +1,78 @@
 defmodule Trans.QueryBuilder do
   import Ecto.Query, only: [from: 2]
   @moduledoc """
-  Provides functions to build queries with conditions on translated fields. Take
-  a look at the `Trans` module documentation to see how you can set up convenience
-  helpers in your model module to avoid repetition of default values.
+  Provides functions for building Ecto queries with conditions on translated
+  fields.
   """
 
   @doc """
-  Adds a condition to the given query to filter only those models translated to
-  the given locale.
+  Adds a condition to the given query to filter only those schemas translated
+  into the given locale.
 
-  Take a look at the `Trans` module to see how you can set up convenience functions
-  in your model to avoid excessive repetition of default options.
+  ## Usage example (basic)
 
-  ## Usage example
-
-  Suppose that we have an article model which has a title and a body fields, both
-  of them can be translated.
+  Imagine that we have an `Article` schema wich has a title and a body that must
+  be translated:
 
       defmodule Article do
         use Ecto.Schema
+        use Trans, translates: [:title, :body]
 
         schema "articles" do
           field :title, :string
           field :body, :string
           field :translations, :map
         end
-
       end
 
-  We could then get only the articles that are translated into spanish like this:
+  We could then get only the articles that are translated into ES like this:
 
-      iex> Article |> Trans.QueryBuilder.with_translations(:es) |> Repo.all
-      [debug] SELECT a0."id", a0."title", a0."body", a0."translations" FROM "articles" AS a0 WHERE ((a0."translations"->>$1) is not null) ["es"] OK query=4.7ms queue=0.1ms
+      iex> Article
+      ...> |> Trans.QueryBuilder.with_translations(:es)
+      ...> |> Repo.all
+      [debug] SELECT a0."id", a0."title", a0."body", a0."translations"
+              FROM "articles" AS a0
+              WHERE ((a0."translations"->>$1) is not null) ["es"]
+      [debug] OK query=4.7ms queue=0.1ms
 
-  ## Translation container
+  ## Usage example (different *translation container*)
 
-  We may have some models in which translations are stored in a different column
-  than the default `translations`. When our translations container is not the
-  default one, it must be explicitly specified.
+  As stated in the documentation of `Trans`, the *translation container* is the
+  field that contains the list of translations for the struct.
 
-  Suppose that we have a model like the one in the previous example, but which
-  stores the translations in the field `my_translation_container`:
+  By default this function looks for the translations in a field called
+  `translations`.  If your struct stores the translations in a different field,
+  it should be specified when calling this function.
+
+  Imagine that we have an `Article` schema like the previous example, but this
+  time the translations will be stored in the field `article_translations`:
 
       defmodule Article do
         use Ecto.Schema
+        use Trans, defaults: [container: :article_translations],
+          translates: [:title, :body]
 
         schema "articles" do
           field :title, :string
           field :body, :string
-          field :my_translation_container, :map
+          field :article_translations, :map
         end
-
       end
 
-  Then, to get only the articles that are translated into Spanish we could use
+  Then, to get only the articles that are translated into ES we could use
   the same technique as in the first example, but specifying the container:
 
-      iex> Article |> Trans.QueryBuilder.with_translations(:es, container: :my_translation_container) |> Repo.all
-      [debug] SELECT a0."id", a0."title", a0."body", a0."my_translation_container" FROM "articles" AS a0 WHERE ((a0."my_translation_container"->>$1) is not null) ["es"] OK query=4.7ms queue=0.1ms
+      iex> Article
+      ...> |> Trans.QueryBuilder.with_translations(:es, container: :article_translations)
+      ...> |> Repo.all
+      [debug] SELECT a0."id", a0."title", a0."body", a0."article_translations"
+              FROM "articles" AS a0
+              WHERE ((a0."article_translations"->>$1) is not null) ["es"]
+      [debug] OK query=4.7ms queue=0.1ms
 
-  You can avoid the same repetition by using the `Trans` module in your model
-  module. Take a look at the `Trans` module documentation to see how to do it.
+  Having to repat constantly the name of the *translation container* can get
+  tiresome quickly.  You can avoid that by using the `Trans` module in your
+  schema.  Take a look at its documentation in order to see some examples.
   """
   def with_translations(query, locale, opts \\ [])
 
