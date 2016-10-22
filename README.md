@@ -1,38 +1,60 @@
-# What is Trans?
+# Trans
 
 [![Travis](https://img.shields.io/travis/belaustegui/trans.svg?maxAge=2592000&&style=flat-square)](https://travis-ci.org/belaustegui/trans)
 [![Hex.pm](https://img.shields.io/hexpm/dt/trans.svg?maxAge=2592000&style=flat-square)](https://hex.pm/packages/trans)
 
-Trans is a library that helps you managing embedded model translations.
-Trans is inspired by the great [hstore translate](https://github.com/Leadformance/hstore_translate) gem for Ruby.
+`Trans` provides a way to manage and query translations embedded into schemas
+and removes the necessity of maintaing extra tables only for translation storage.
 
-**IMPORTANT**: for the moment, **Trans query building works only with PostgreSQL**, since the queries use
-the special operators for JSONB. Keep this in mind if you want to find models filtering from translated
-attributes.
+`Trans` is inspired by the great [`hstore translate`](https://github.com/Leadformance/hstore_translate)
+gem for Ruby.
 
-Trans is published on [hex.pm](https://hex.pm/packages/trans). The documentation is also [available online](https://hexdocs.pm/trans/).
+`Trans` is published on [hex.pm](https://hex.pm/packages/trans) and the documentation
+is also [available online](https://hexdocs.pm/trans/).
+
+## Requirements
+
+- Ecto 2.0 or higher
+- PostgreSQL 9.4 or higher (since `Trans` leverages the JSONB datatype)
+
+Support for MySQL JSON type (introduced in MySQL 5.7) will come also, but right
+now it is not yet implemented.
 
 ## Why Trans?
 
-The traditional approach to content internationalization consists of using an additional
-table for each translatable model, this table contains the model translations. For example,
-we may have a `posts` and `posts_translations` tables.
+The traditional approach to content internationalization consists on using an
+additional table for each translatable schema. This table works only as a storage
+for the original schema translations. For example, we may have a `posts` and
+a `posts_translations` tables.
 
-Trans provides a different approach based on modern RDBMSs support for unstructured data.
-Each translatable model can have a field (stored as a column in the database) that contains
-its translations in the form of a dictionary. This approach allows us to reduce table joins,
-specially when the number of translatable models and instances gets bigger.
+This approach has a few disadvantages:
 
-Trans is lightweight and modularized. The main functionality is provided by the `Trans.Translator` and the `Trans.QueryBuilder` modules. The `Trans` module simplifies the calls to translator and query builder functions from a model.
+- It complicates the database schema because it creates extra tables that are
+  coupled to the "main" ones.
+- It makes migrations and schemas more complicated, since we always have to keep
+  the two tables in sync.
+- It requires constant JOINs in order to filter or fetch records along with their
+  translations.
 
-## How can I use Trans?
+The approach used by `Trans` is based on modern RDBMSs support for unstructured
+datatypes.  Instead of storing the translations in a different table, each
+translatable schema has an extra column that contains all of its translations.
+This approach drastically reduces the number of required JOINs when filtering or
+fetching records.
 
-### Adding translations to a model
+Trans is lightweight and modularized. The main functionality is provided by the
+`Trans.Translator` and the `Trans.QueryBuilder` modules, while the `Trans` module
+simplifies the calls to translator and query builder functions from a schema.
 
-The first step consists on adding a new column to the desired table. This column will be known as the **translation container**.
+## Making a schema translatable
+
+Every translatable schema needs a field in which the translations are stored.
+This field is known as the *translation container*.
+
+The first step consists on adding a new column to the schema's table:
 
 ```elixir
-defmodule MyApp.Repo.Migrations.AddTranslationsColumn do
+defmodule MyApp.Repo.Migrations.AddTranslationsToArticles do
   use Ecto.Migration
 
   def change do
@@ -43,118 +65,183 @@ defmodule MyApp.Repo.Migrations.AddTranslationsColumn do
 end
 ```
 
-The model's schema must be also updated, so it can be mapped by Ecto.
+The schema must be also updated, so the new column can be automatically mapped
+by `Ecto`.
 
 ```elixir
-defmodule MyApp.Article do
+defmodule Article do
   use Ecto.Schema
 
   schema "articles" do
-    ... # Previous fields
-    field :title, :string
-    field :body, :string
-    field :author, :string
-    field :translations, :map # This field will contain our translations
+    field :title, :string     # our previous fields...
+    field :body, :string      # our previous fields...
+    field :translations, :map # this is our translation container
   end
 end
 ```
 
-### Using helper functions
+## Storing translations
 
-Trans provides two kind of helper functions:
-
-  * Content translation accessors, provided by the `Trans.Translator` module.
-  * Helpers for query construction, provided by the `Trans.QueryBuilder` module.
-
-The functions provided by those two modules can be used with **any** model.
-
-If a certain model has some special configuration (for example, the translation container
-field is named `translations_container` instead of simply `translations`) it may be
-tiresome to manually specify this on every call.  To avoid this unnecesary repetition,
-we can use the `Trans` module, which provides a nice way of specifying default options
-that will be automatically passed to `Trans.Translator` and `Trans.QueryBuilder`.
-
-You can use the `Trans` module in your model like this:
+Translations are stored as a map of maps in the *translation container* of our
+schema.  For example:
 
 ```elixir
-defmodule MyApp.Article do
-  # ...
-  use Trans, translates: [:title, :body], defaults: [container: :translations]
-  # ...
+iex> changeset = Article.changeset(%Article{}, %{
+...>   title: "How to Write a Spelling Corrector",
+...>   body: "A wonderful article by Peter Norvig",
+...>   translations: %{
+...>     "es" => %{
+...>       title: "Cómo escribir un corrector ortográfico",
+...>       body: "Un artículo maravilloso de Peter Norvig"
+...>     },
+...>     "fr" => %{
+...>        title: "Comment écrire un correcteur orthographique",
+...>        body: "Un merveilleux article de Peter Norvig"
+...>      }
+...>   }
+...> })
+
+iex> article = Repo.insert!(changeset)
+```
+
+## Filtering queries by translations
+
+We may want to fetch articles that are translated into a certain language.  To
+do this we may use the `with_translations/3` function of the `Trans.QueryBuilder`
+module:
+
+```elixir
+iex> Article
+...> |> Trans.QueryBuilder.with_translations(:es)
+...> |> Repo.all
+[debug] SELECT a0."id", a0."title", a0."body", a0."translations"
+        FROM "articles" AS a0
+        WHERE ((a0."translations"->>$1) is not null) ["es"]
+[debug] OK query=4.7ms queue=0.1ms
+```
+
+We can also get more specific and fetch only those articles for which their
+Spanish title contains the word "Trans".
+
+```elixir
+iex> Article
+...> |> Trans.QueryBuilder.with_translation(:es, :title, "Trans")
+...> |> Repo.all
+[debug] SELECT a0."id", a0."title", a0."body", a0."translations"
+        FROM "articles" AS a0
+        WHERE (a0."translations"->$1->>$2 = $3) ["es", "title", "Trans"]
+[debug] OK query=2.6ms queue=0.1ms
+```
+
+By default `Trans` looks for an exact match when we add a condition.  We may
+also perform a LIKE or ILIKE comparison and use wilcards like this:
+
+```elixir
+iex> Article
+...> |> Trans.QueryBuilder.with_translation(:es, :title, "%Trans%", type: :like)
+...> |> Repo.all
+[debug] SELECT a0."id", a0."title", a0."body", a0."translations"
+        FROM "articles" AS a0
+        WHERE (a0."translations"->$1->>$2 LIKE $3) ["es", "title", "%Trans%"]
+[debug] OK query=2.1ms queue=0.1ms
+```
+
+## Obtainig translations from a struct
+
+In those examples we will be referring to this article:
+
+```elixir
+iex> article = %Article{
+...>   title: "How to Write a Spelling Corrector",
+...>   body: "A wonderful article by Peter Norvig",
+...>   translations: %{
+...>     "es" => %{
+...>       title: "Cómo escribir un corrector ortográfico",
+...>       body: "Un artículo maravilloso de Peter Norvig"
+...>     },
+...>     "fr" => %{
+...>        title: "Comment écrire un correcteur orthographique",
+...>        body: "Un merveilleux article de Peter Norvig"
+...>      }
+...>   }
+...> }
+```
+
+Once we have already loaded a struct, we may use the `Trans.Translator.translate/4`
+function to easily access a translation for a certain field.
+
+```elixir
+iex> Article.translate(article, :es, :body)
+"Cómo escribir un corrector ortográfico"
+```
+
+The `Trans.Translator.translate/4` function also provides a fallback mechanism
+that activates when the required translation does not exist:
+
+```elixir
+iex> Article.translate(article, :de, :title)
+"How to Write a Spelling Corrector" # Fallback to untranslated value
+```
+
+## Using a different *translation container*
+
+In the previous examples we have used `translations` as the name of the
+*translation container* and `Trans` looks automatically for translations into this
+field.
+
+We can also give the *translation container* a different name:
+
+```elixir
+defmodule Article do
+  use Ecto.Schema
+
+  schema "articles" do
+    field :title, :string
+    field :body, :string
+    field :article_translations, :map # this is our translation container
+  end
 end
 ```
 
-We *must* define the list of translatable fields for the model, otherwise Trans
-will raise an error during compilation.
-
-We can also provide a list of default options that will be automatically passed
-in the convenience functions. In the example, we are specifying the translation
-container of the model (by default Trans looks for a container called `translations`
-so we could omit it in the example).
-
-### Storing translations
-
-Translations are stored as a map of maps in the translation container field. For example
+We can call the same functions as in previous examples, but we have to specify
+the name of the *translation container* to override the default:
 
 ```elixir
-
-translations = %{
-  "es" => %{"title" => "¿Por qué Trans es genial?", "body" => "Disertación sobre la genialidad de Trans"},
-  "fr" => %{"title" => "Pourquoi Trans est grande?", "body" => "Dissertation sur le génie de Trans"}
-}
-
-changeset = Article.changeset(%Article{}, %{
-  title: "Why Trans is great",
-  body: "An explanation about the Trans greatness",
-  author: "Cristian Álvarez Belaustegui",
-  translations: translations
-})
-
-article = Repo.insert!(changeset)
-
+iex> Article
+...> |> Trans.QueryBuilder.with_translation(:es, :title, "Trans", container: :article_translations)
+...> |> Repo.all
+[debug] SELECT a0."id", a0."title", a0."body", a0."translations"
+        FROM "articles" AS a0
+        WHERE (a0."article_translations"->$1->>$2 = $3) ["es", "title", "Trans"]
+[debug] OK query=2.6ms queue=0.1ms
 ```
 
-### Querying translations
-
-We may need to get articles that are translated into a certain language. To do this we may
-use the `Trans.QueryBuilder.with_translations/3` function (or the helper provided by `Trans` in our model).
+Having to specify the name of the *translation container* everytime is error
+prone and can become tiresome.  Instead we can use the `Trans` module in our
+schema and have this option specified automatically for us:
 
 ```elixir
-articles_translated_to_spanish = Article |> Article.with_translations(:es) |> Repo.all
-# SELECT a0."id", a0."title", a0."body", a0."translations", a0."author" FROM "articles" AS a0 WHERE (a0."translations"->>$1) is not null) ["es"] OK query=17.1ms queue=0.1ms
+defmodule Article do
+  use Ecto.Schema
+  use Trans, defaults: [container: :article_translations],
+    translates: [:title, :body]
+
+  schema "articles" do
+    field :title, :string
+    field :body, :string
+    field :article_translations, :map
+  end
+end
 ```
 
-We may also want to get articles for which their french title contains "Trans".
+Now we can do:
 
 ```elixir
-articles = Article |> Article.with_translation(:fr, :title, "%Trans%", type: :like)
-# [debug] SELECT a0."id", a0."title", a0."body", a0."translations", a0."author" FROM "articles" AS a0 WHERE (a0."translations"->$1->>$2 LIKE $3) ["fr", "title", "%Trans%"] OK query=2.1ms queue=0.1ms
-```
-
-The `Trans.QueryBuilder.with_translation/5` function supports three types of comparisons:
-
-* If no type is specified, the query will look for an exact match.
-* For a case-sensitive pattern comparison use `type: :like`
-* For a case-insensitive pattern comparison use `type: :ilike`
-
-### Translating fields
-
-When we have a model struct, we can use the `Trans.Translator.translate/4` (or the equivalent helper provided by `Trans`) function to easily load
-a certain translation.
-
-```elixir
-Article.translate(article, :es, :body) # "Disertación sobre la genialidad de Trans"
-```
-
-The `Trans.Translator.translate/3` function also provides a fallback mechanism for when
-non existant translations are accessed:
-
-```elixir
-Article.translate(article, :de, :title) # Fallback to untranslated value: "Why Trans is great"
-```
-
-Since the translation container is a simple map, we can always access its values manually:
-
-```elixir
-article.translations["es"]["body"] # "Disertación sobre la genialidad de Trans"
+iex> Article
+...> |> Article.with_translation(:es, :title, "Trans")
+...> |> Repo.all
+[debug] SELECT a0."id", a0."title", a0."body", a0."translations"
+        FROM "articles" AS a0
+        WHERE (a0."article_translations"->$1->>$2 = $3) ["es", "title", "Trans"]
+[debug] OK query=2.6ms queue=0.1ms
 ```

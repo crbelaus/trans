@@ -167,11 +167,11 @@ defmodule Trans.QueryBuilder do
   we must also specify the translation container name:
 
       iex> Article
-      ...> |> Trans.QueryBuilder.with_translation(:fr, :title, "%république%", type: :ilike, container: :my_translation_container)
+      ...> |> Trans.QueryBuilder.with_translation(:fr, :title, "%république%", type: :ilike, container: :article_translations)
       ...> |> Repo.all
-      [debug] SELECT a0."id", a0."title", a0."body", a0."my_translation_container"
+      [debug] SELECT a0."id", a0."title", a0."body", a0."article_translations"
               FROM "articles" AS a0
-              WHERE (a0."my_translation_container"->$1->>$2 ILIKE $3) ["fr", "title", "%république%"]
+              WHERE (a0."article_translations"->$1->>$2 ILIKE $3) ["fr", "title", "%république%"]
       [debug] OK query=2.1ms queue=0.1ms
 
   Having to repat constantly the name of the *translation container* can get
