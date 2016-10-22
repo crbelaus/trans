@@ -1,100 +1,106 @@
 defmodule Trans.Translator do
   @moduledoc """
-  Provides functions to access translated fiels in a model. Take a
-  look at the `Trans` module documentation to see how you can set up convenience
-  helpers in your model module to avoid repetition of default values.
+  Provides functions to easily access translated values from schemas and fallback
+  to a default locale when the translation does not exist in the required one.
   """
 
   @doc """
-  Returns the translated value for the given locale and field. If the field is
-  not translated into the given locale, fallbacks to the default one.
+  Gets the translated value for the given locale and field. If the field is not
+  translated into the required locale, the default locale will be used.
 
-  Take a look at the `Trans` module to see how you can set up convenience functions
-  to access the translated values from your model module and avoid repetition of
-  defaul options.
+  ## Usage example (basic)
 
-  ## Usage example
+  Imagine that we have an `Article` schema wich has a title and a body that must
+  be translated:
 
-  Suppose that we have an article model which has a title and a body fields, both
-  fields can be translated.
-
-      defmodule Trans.Article do
+      defmodule Article do
         use Ecto.Schema
+        use Trans, translates: [:title, :body]
 
         schema "articles" do
           field :title, :string
           field :body, :string
           field :translations, :map
         end
-
       end
 
-  We have an article translated to spanish.
+  We may have an `Article` like this (Our main locale is EN, but we have
+  translations in ES and FR):
 
-      iex> changeset = Article.changeset(%Article{}, %{
-          title: "Title in the default locale",
-          body: "Body in the default locale",
-          translations: %{
-            "es" => %{title: "Title in Spanish", body: "Body in Spanish"}
-          }
-        })
-      iex> article = Repo.insert!(changeset)
-      %Article{...}
+      iex> article = %Article{
+      ...>   title: "How to Write a Spelling Corrector",
+      ...>   body: "A wonderful article by Peter Norvig",
+      ...>   translations: %{
+      ...>     "es" => %{
+      ...>       title: "Cómo escribir un corrector ortográfico",
+      ...>       body: "Un artículo maravilloso de Peter Norvig"
+      ...>     },
+      ...>     "fr" => %{
+      ...>        title: "Comment écrire un correcteur orthographique",
+      ...>        body: "Un merveilleux article de Peter Norvig"
+      ...>      }
+      ...>   }
+      ...> }
 
-  We can then get the title translated to Spanish:
+  We can then get the title translated into ES:
 
       iex> Trans.Translator.translate(article, :es, :title)
-      "Title in Spanish"
+      "Cómo escribir un corrector ortográfico"
 
-  If we try to get the title translated in a different locale, `Trans` will
-  automatically fallback to the default value
+  If we try to get the title translated into a non available locale, Trans will
+  automatically fallback to the default one.
 
-      iex> Trans.Translator.translate(article, :fr, :title)
-      "Title in the default locale"
+      iex> Trans.Translator.translate(article, :de, :title)
+      "How to Write a Spelling Corrector"
 
-  ## Translation container
+  ## Usage example (different *translation container*)
 
-  The translation container is the field that contains the translations of other
-  fields. By default, this function will look for translations into a field named
-  `translations`.  If you use a different container you can also specify it so
-  the translations are looked up correctly.
+  As stated in the documentation of `Trans`, the *translation container* is the
+  field that contains the list of translations for the struct.
 
-  Suppose we have an article model like the one we had in the first example, but
-  this time we are storing the translations in the `my_translation_container`
-  field:
+  By default this function looks for the translations in a field called
+  `translations`.  If your struct stores the translations in a different field,
+  it should be specified when calling this function.
 
-      defmodule Trans.Article do
+  Imagine that we have an `Article` schema like the previous example, but this
+  time the translations will be stored in the field `article_translations`:
+
+      defmodule Article do
         use Ecto.Schema
+        use Trans, defaults: [container: :article_translations],
+          translates: [:title, :body]
 
         schema "articles" do
           field :title, :string
           field :body, :string
-          field :my_translation_container, :map
+          field :article_translations, :map
         end
-
       end
 
-  We have an article translated to spanish.
+  We may have an `Article` like this (Our main locale is EN, but we have
+  translations in ES and FR):
 
-      iex> changeset = Article.changeset(%Article{}, %{
-          title: "Title in the default locale",
-          body: "Body in the default locale",
-          my_translation_container: %{
-            "es" => %{title: "Title in Spanish", body: "Body in Spanish"}
-          }
-        })
-      iex> article = Repo.insert!(changeset)
-      %Article{...}
+      iex> article = %Article{
+      ...>   title: "How to Write a Spelling Corrector",
+      ...>   body: "A wonderful article by Peter Norvig",
+      ...>   article_translations: %{
+      ...>     "es" => %{
+      ...>       title: "Cómo escribir un corrector ortográfico",
+      ...>       body: "Un artículo maravilloso de Peter Norvig"
+      ...>     },
+      ...>     "fr" => %{
+      ...>        title: "Comment écrire un correcteur orthographique",
+      ...>        body: "Un merveilleux article de Peter Norvig"
+      ...>      }
+      ...>   }
+      ...> }
 
-  We can translate any field as usual. Since the translation container is not
-  the default one, it needs to be explicitly specified.
+  We can translate any field as usual, but the translation container must be
+  explicitly specified.
 
-      iex> Trans.Translator.translate(article, :es, :title, container: :my_translation_container)
-      "Title in Spanish"
+      iex> Trans.Translator.translate(article, :es, :title, container: :article_translations)
+      "Cómo escribir un corrector ortográfico"
 
-  When we want to translate multiple fields, having to pass the translation
-  container name everytime can be a little bit tedious. You can avoid this
-  repetition by using the `Trans` module in your own module module.
   """
   def translate(struct, locale, field, opts \\ []) when is_map(struct) do
     translation_container = opts[:container] || :translations
