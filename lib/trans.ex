@@ -1,32 +1,88 @@
 defmodule Trans do
   @moduledoc """
+  Trans provides a way to manage and query translations embedded into schemas
+  and removes the necessity of maintaing extra tables only for translation storage.
+
   Trans is split into 2 main components:
 
-  * `Trans.Translator`: provides functions for obtaining translated values from
-  a module.
-  * `Trans.QueryBuilder`: provides functions for finding modules by translated
-  values.
+  * `Trans.Translator` - provides functions to easily access translated values
+  from schemas and fallback to a default locale when the translation does not
+  exist in the required one.  **If you want to get translations from a schema you
+  should take a look at this module**.
+  * `Trans.QueryBuilder` - provides functions that can be chained in queries and
+  allow filtering by translated values.  **If you want to filter queries using
+  translated fields you should take a look at this module**.
 
-  Take a look at the documentation of those modules to see what functions they
-  provide.
+  ## What does this package do?
 
-  ## Usage
+  `Trans` allows you to store translations of a Struct as an extra field of
+  that Struct.
 
-  You can use this module in each of your model modules like this:
+  `Trans` sees its main utility when it is used on `Ecto.Schema` modules.
+  **When paired with an `Ecto.Schema`, `Trans` allows you to keep the schema and
+  its translations on the same database table.**  This removes the necessity of
+  spreading the schema and its translations on multiple tables and reduces the
+  number of required *JOINs* that must be performed on queries.
 
-      use Trans, translates: [:field1, :field2], defaults: [...]
+  The field that stores the translations on the Struct is called the *translation
+  container* and by default it is expected to be named `translations`, but
+  that can be easily overriden.
 
-  By using `Trans` you can set up convenience functions to avoid unnecesary
-  repetition of default options. For example, your model may use a translation
-  container with a different name than the default `translations`. In this case
-  you would need to specify the translation container in each call to
-  `Trans.QueryBuilder`. By using the `Trans` module you can specify a list of
-  default options that will be automatically applied to those modules.
+  ## What does this module do?
 
-  When using `Trans`, two main functions will be set up in your module:
-  `with_translations` and `with_translation`. Those two functions call their
-  respectives in the `Trans.QueryBuilder` module, but automatically passing
-  the `defaults` specified when using `Trans`.
+  Although it does not provide any functions that can be used directly
+  (those functions are provided by the `Trans.Translator` and `Trans.QueryBuilder`
+  modules), using the `Trans` module provides two main benefits:
+
+  - **Checking the safety of the translation operations** - When your schema uses
+  `Trans` it will safe check the queries that filter on a translated field.  This
+  means that trying to set a translation filter for an untranslated field will
+  produce a error when building the query.
+
+  - **Avoiding the repetition of default options** - If your schema's
+  *translation container* receives a different name than the default
+  `translations`, it would have to be specified on every call to
+  `Trans.QueryBuilder` or `Trans.Translator` functions. When using the `Trans`
+  module, this setting can be specified once an applied automatically when required.
+
+  ## Usage examples
+
+  The general way to use `Trans` in a module is:
+
+      use Trans, translates: [:field_1, :field_2][, defaults: [...]]
+
+  Suppose that you have an `Article` schema that has a title and a body that must
+  be translated.  You can set up the convenience functions in your module
+  like the following example:
+
+      defmodule Article do
+        use Ecto.Schema
+        use Trans, translates: [:title, :body]
+
+        schema "articles" do
+          field :title, :string
+          field :body, :string
+          field :translations, :map
+        end
+      end
+
+  Now imagine that the `Article` schema uses a different *translation container*
+  to store the translations.  This should be specified when using `Trans` so
+  it can automatically provide the required defaults to `Trans.QueryBuilder`
+  and `Trans.Translator` like the following example:
+
+      defmodule Article do
+        use Ecto.Schema
+        use Trans, defaults: [container: :article_translations],
+          translates: [:title, :body]
+
+        schema "articles" do
+          field :title, :string
+          field :body, :string
+          field :article_translations, :map
+        end
+      end
+
   """
 
   defmacro __using__(opts) do
