@@ -41,8 +41,7 @@ defmodule Trans.Mixfile do
     [{:postgrex, "~> 0.11"},
      {:ecto, "~> 2.0"},
      {:poison, "~> 2.1"},
-     {:ex_doc, ">= 0.0.0", only: :dev},
-     {:earmark, ">= 0.0.0", only: :dev}]
+     {:ex_doc, ">= 0.0.0", only: :dev}]
   end
 
   defp package do
