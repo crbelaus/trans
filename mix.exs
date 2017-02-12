@@ -12,8 +12,8 @@ defmodule Trans.Mixfile do
      start_permanent: Mix.env == :prod,
      elixirc_paths: elixirc_paths(Mix.env),
      app_list: app_list(Mix.env),
-     package: package,
-     deps: deps,
+     package: package(),
+     deps: deps(),
      # Docs
      name: "Trans",
      docs: [source_ref: "v#{@version}", main: "Trans",
@@ -54,12 +54,12 @@ defmodule Trans.Mixfile do
 
   # Include Ecto and Postgrex applications in tests
   def app_list(:test), do: [:ecto, :postgrex]
-  def app_list(_), do: app_list
+  def app_list(_), do: app_list()
   def app_list, do: []
 
   # Always compile files in "lib". In tests compile also files in
   # "test/support"
-  def elixirc_paths(:test), do: elixirc_paths ++ ["test/support"]
-  def elixirc_paths(_), do: elixirc_paths
+  def elixirc_paths(:test), do: elixirc_paths() ++ ["test/support"]
+  def elixirc_paths(_), do: elixirc_paths()
   def elixirc_paths, do: ["lib"]
 end
