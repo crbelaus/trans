@@ -40,7 +40,7 @@ defmodule Trans.Mixfile do
   defp deps do
     [{:postgrex, "~> 0.11"},
      {:ecto, "~> 2.0"},
-     {:poison, "~> 3.0"},
+     {:poison, "~> 2.1"},
      {:ex_doc, ">= 0.0.0", only: :dev}]
   end
 
