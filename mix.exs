@@ -1,7 +1,7 @@
 defmodule Trans.Mixfile do
   use Mix.Project
 
-  @version "1.0.1"
+  @version "1.0.2"
 
   def project do
     [app: :trans,
@@ -12,8 +12,8 @@ defmodule Trans.Mixfile do
      start_permanent: Mix.env == :prod,
      elixirc_paths: elixirc_paths(Mix.env),
      app_list: app_list(Mix.env),
-     package: package,
-     deps: deps,
+     package: package(),
+     deps: deps(),
      # Docs
      name: "Trans",
      docs: [source_ref: "v#{@version}", main: "Trans",
@@ -41,8 +41,7 @@ defmodule Trans.Mixfile do
     [{:postgrex, "~> 0.11"},
      {:ecto, "~> 2.0"},
      {:poison, "~> 2.1"},
-     {:ex_doc, ">= 0.0.0", only: :dev},
-     {:earmark, ">= 0.0.0", only: :dev}]
+     {:ex_doc, ">= 0.0.0", only: :dev}]
   end
 
   defp package do
@@ -55,12 +54,12 @@ defmodule Trans.Mixfile do
 
   # Include Ecto and Postgrex applications in tests
   def app_list(:test), do: [:ecto, :postgrex]
-  def app_list(_), do: app_list
+  def app_list(_), do: app_list()
   def app_list, do: []
 
   # Always compile files in "lib". In tests compile also files in
   # "test/support"
-  def elixirc_paths(:test), do: elixirc_paths ++ ["test/support"]
-  def elixirc_paths(_), do: elixirc_paths
+  def elixirc_paths(:test), do: elixirc_paths() ++ ["test/support"]
+  def elixirc_paths(_), do: elixirc_paths()
   def elixirc_paths, do: ["lib"]
 end
