@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 - Remove `earmark` as a direct dependency since it is already required by `ex_doc`.
 - Remove warnings when compiling with Elixir 1.4.
+- Adds contribution guidelines detailed in `CONTRIBUTING.md`.
 
 ## 1.0.1 - 2016-10-22
 ### Added
