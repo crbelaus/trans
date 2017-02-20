@@ -4,7 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## 1.0.2 - 2017-02-19
+### Added
 - Remove `earmark` as a direct dependency since it is already required by `ex_doc`.
 - Remove warnings when compiling with Elixir 1.4.
 - Adds contribution guidelines detailed in `CONTRIBUTING.md`.
