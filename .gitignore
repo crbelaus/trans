@@ -4,3 +4,6 @@
 erl_crash.dump
 *.ez
 /doc
+
+# Ignore test configuration.
+config/test.exs
