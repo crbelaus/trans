@@ -91,17 +91,19 @@ defmodule Trans do
 
   defp setup_convenience_functions(defaults, translatables) do
     quote do
-      # Wrapper of Trans.QueryBuilder.with_translations/3
-      def with_translations(query, locale, opts \\ []) do
-        Trans.QueryBuilder.with_translations(query, locale, opts ++ unquote(defaults))
-      end
-
-      # Wrapper of Trans.QueryBuilder.with_translations
-      def with_translation(query, locale, field, expected, opts \\ []) do
-        if not Enum.member?(unquote(translatables), field) do
-          raise ArgumentError, "The field `#{field}` is not declared as translatable"
+      if Code.ensure_compiled?(Trans.QueryBuilder) do
+        # Wrapper of Trans.QueryBuilder.with_translations/3
+        def with_translations(query, locale, opts \\ []) do
+          Trans.QueryBuilder.with_translations(query, locale, opts ++ unquote(defaults))
         end
-        Trans.QueryBuilder.with_translation(query, locale, field, expected, opts ++ unquote(defaults))
+
+        # Wrapper of Trans.QueryBuilder.with_translations
+        def with_translation(query, locale, field, expected, opts \\ []) do
+          if not Enum.member?(unquote(translatables), field) do
+            raise ArgumentError, "The field `#{field}` is not declared as translatable"
+          end
+          Trans.QueryBuilder.with_translation(query, locale, field, expected, opts ++ unquote(defaults))
+        end
       end
     end
   end
