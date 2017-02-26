@@ -11,7 +11,8 @@ defmodule Trans do
   should take a look at this module**.
   * `Trans.QueryBuilder` - provides functions that can be chained in queries and
   allow filtering by translated values.  **If you want to filter queries using
-  translated fields you should take a look at this module**.
+  translated fields you should take a look at this module**. To use this module
+  you must have `Ecto` among your dependencies.
 
   ## What does this package do?
 

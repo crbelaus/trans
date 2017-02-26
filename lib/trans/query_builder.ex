@@ -4,6 +4,9 @@ if Code.ensure_loaded?(Ecto.Query) do
     @moduledoc """
     Provides functions for building Ecto queries with conditions on translated
     fields.
+
+    Since this module depends on `Ecto.Query`, it won't be compiled if `ecto`
+    is not on the dependencies list of your application.
     """
 
     @doc """
