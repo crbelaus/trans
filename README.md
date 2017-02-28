@@ -12,7 +12,11 @@ gem for Ruby.
 `Trans` is published on [hex.pm](https://hex.pm/packages/trans) and the documentation
 is also [available online](https://hexdocs.pm/trans/).
 
-## Requirements
+## Optional Requirements
+
+Having Ecto and Postgrex in your application will allow you to use the `Trans.QueryBuilder`
+component to generate database queries based on translated data.  You can still
+use the `Trans.Translator` component without those dependencies though.
 
 - Ecto 2.0 or higher
 - PostgreSQL 9.4 or higher (since `Trans` leverages the JSONB datatype)
