@@ -150,7 +150,7 @@ iex> Article
 [debug] OK query=2.1ms queue=0.1ms
 ```
 
-## Obtainig translations from a struct
+## Obtaining translations from a struct
 
 In those examples we will be referring to this article:
 
