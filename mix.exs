@@ -38,10 +38,14 @@ defmodule Trans.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:postgrex, "~> 0.11", optional: true},
-     {:ecto, "~> 2.0", optional: true},
-     {:poison, "~> 2.1"},
-     {:ex_doc, ">= 0.0.0", only: :dev}]
+    [
+      {:poison, "~> 2.1"},
+      {:postgrex, "~> 0.11", optional: true},
+      {:ecto, "~> 2.1", optional: true},
+      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:ex_machina, "~> 2.0", only: :test},
+      {:faker, "~> 0.7.0", only: :test},
+    ]
   end
 
   defp package do
