@@ -30,7 +30,7 @@ defmodule QueryBuilderTest do
 
   test "should find an article by its FR title",
   %{translated_article: article} do
-    fr_title = article.test_translation_container[:fr]["title"]
+    fr_title = article.test_translation_container["fr"]["title"]
     matches =
       Article
       |> Article.with_translation(:fr, :title, fr_title)
@@ -50,7 +50,7 @@ defmodule QueryBuilderTest do
   test "should find an article by partial and case sensitive translation",
   %{translated_article: article} do
     first_words =
-      article.test_translation_container[:es]["body"]
+      article.test_translation_container["es"]["body"]
       |> String.split
       |> Enum.take(3)
       |> Enum.join(" ")
@@ -65,7 +65,7 @@ defmodule QueryBuilderTest do
   test "should not find an article by incorrect case using case sensitive translation",
   %{translated_article: article} do
     first_words =
-      article.test_translation_container[:fr]["body"]
+      article.test_translation_container["fr"]["body"]
       |> String.split
       |> Enum.take(3)
       |> Enum.join(" ")
@@ -80,7 +80,7 @@ defmodule QueryBuilderTest do
   test "should find an article by incorrect case using case insensitive translation",
   %{translated_article: article} do
     first_words =
-      article.test_translation_container[:fr]["body"]
+      article.test_translation_container["fr"]["body"]
       |> String.split
       |> Enum.take(3)
       |> Enum.join(" ")

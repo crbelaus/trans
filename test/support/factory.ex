@@ -1,4 +1,4 @@
-alias Trans.Article
+  alias Trans.Article
 
 defmodule Trans.Factory do
   use ExMachina.Ecto, repo: Trans.TestRepo
@@ -8,11 +8,11 @@ defmodule Trans.Factory do
       title: Faker.Lorem.sentence(5, " "),
       body: Faker.Lorem.sentence(10, " "),
       test_translation_container: %{
-        "es": %{
+        "es" => %{
           "title" => Faker.Lorem.sentence(5, " "),
           "body"  => Faker.Lorem.sentence(10, " ")
         },
-        "fr": %{
+        "fr" => %{
           "title" => Faker.Lorem.sentence(5, " "),
           "body"  => Faker.Lorem.sentence(10, " ")
         }
