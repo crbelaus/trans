@@ -1,9 +1,10 @@
+alias Trans.Article
+alias Trans.TestRepo
+alias Trans.Translator
+
 defmodule TransTest do
   use ExUnit.Case
-
-  alias Trans.Article
-  alias Trans.TestRepo
-  alias Trans.Translator
+  import Trans.Factory
   doctest Trans
 
   setup_all do
@@ -22,44 +23,6 @@ defmodule TransTest do
     TestRepo.insert! Article.changeset(%Article{}, attrs_wo_translations)
     TestRepo.insert! Article.changeset(%Article{}, attrs_w_translations)
     :ok
-  end
-
-  test "find article translated to ES" do
-    matches = Article |> Article.with_translations(:es) |> TestRepo.all
-    assert Enum.count(matches) == 1
-  end
-
-  test "find (non existant) article translated to DE" do
-    matches = Article |> Article.with_translations(:de) |> TestRepo.all
-    assert Enum.empty?(matches)
-  end
-
-  test "find article by translated title" do
-    matches = Article
-    |> Article.with_translation(:fr, :title, "title FR")
-    |> TestRepo.all
-    assert Enum.count(matches) == 1
-  end
-
-  test "find (non existant) article by translated title" do
-    matches = Article
-    |> Article.with_translation(:fr, :title, "title ES")
-    |> TestRepo.all
-    assert Enum.empty?(matches)
-  end
-
-  test "find article by translated body using case-sensitive pattern" do
-    matches = Article
-    |> Article.with_translation(:es, :body, "%ES", type: :like)
-    |> TestRepo.all
-    assert Enum.count(matches) == 1
-  end
-
-  test "find article by translated body using wrong pattern" do
-    matches = Article
-    |> Article.with_translation(:es, :body, "%es", type: :like)
-    |> TestRepo.all
-    assert Enum.empty?(matches)
   end
 
   test "find article by translated body using case-insensitive pattern" do
