@@ -31,30 +31,23 @@ defmodule Trans do
 
   ## What does this module do?
 
-  Although it does not provide any functions that can be used directly
-  (those functions are provided by the `Trans.Translator` and `Trans.QueryBuilder`
-  modules), using the `Trans` module provides two main benefits:
+  This module provides metadata that is required by the `Trans.QueryBuilder` and
+  the `Trans.Translator` modules to work. When used, this module will define
+  two functions in your module:
 
-  - **Checking the safety of the translation operations** - When your schema uses
-  `Trans` it will safe check the queries that filter on a translated field.  This
-  means that trying to set a translation filter for an untranslated field will
-  produce a error when building the query.
-
-  - **Avoiding the repetition of default options** - If your schema's
-  *translation container* receives a different name than the default
-  `translations`, it would have to be specified on every call to
-  `Trans.QueryBuilder` or `Trans.Translator` functions. When using the `Trans`
-  module, this setting can be specified once an applied automatically when required.
+  - `__trans__(:container)` returns an atom with the name of the translation
+  container field.
+  - `__trans__(:fields)` returns a list of atoms with the names of the
+  translatable fields.
 
   ## Usage examples
 
   The general way to use `Trans` in a module is:
 
-      use Trans, translates: [:field_1, :field_2][, defaults: [...]]
+      use Trans, translates: [:field_1, :field_2][, container: :translation_container_field]
 
   Suppose that you have an `Article` schema that has a title and a body that must
-  be translated.  You can set up the convenience functions in your module
-  like the following example:
+  be translated.  You can set up Trans in your module like the following example:
 
       defmodule Article do
         use Ecto.Schema
@@ -74,8 +67,7 @@ defmodule Trans do
 
       defmodule Article do
         use Ecto.Schema
-        use Trans, defaults: [container: :article_translations],
-          translates: [:title, :body]
+        use Trans, translates: [:title, :body], container: :article_translations
 
         schema "articles" do
           field :title, :string
@@ -87,41 +79,48 @@ defmodule Trans do
   """
 
   defmacro __using__(opts) do
-    setup_convenience_functions(get_defaults(opts), get_translatables(opts))
-  end
-
-  defp setup_convenience_functions(defaults, translatables) do
+    container = Keyword.get(opts, :container, :translations)
+    translated_fields = get_translatables(opts)
     quote do
-      if Code.ensure_compiled?(Trans.QueryBuilder) do
-        # Wrapper of Trans.QueryBuilder.with_translations/3
-        def with_translations(query, locale, opts \\ []) do
-          Trans.QueryBuilder.with_translations(query, locale, opts ++ unquote(defaults))
-        end
+      @doc """
+      This function provides metadata used by Trans for the `Trans.QueryBuilder`
+      and the `Trans.Translator` modules.
 
-        # Wrapper of Trans.QueryBuilder.with_translations
-        def with_translation(query, locale, field, expected, opts \\ []) do
-          if not Enum.member?(unquote(translatables), field) do
-            raise ArgumentError, "The field `#{field}` is not declared as translatable"
+      Imagine the following module.
+
+          defmodule Article do
+            use Ecto.Schema
+            use Trans, translates: [:title, :body], container: :article_translations
+
+            schema "articles" do
+              field :title, :string
+              field :body, :string
+              field :article_translations, :map
+            end
           end
-          Trans.QueryBuilder.with_translation(query, locale, field, expected, opts ++ unquote(defaults))
-        end
-      end
+
+      Calling `__trans__(:container)` will return the name of the translation
+      container field.
+
+          iex(1)> Article.__trans__(:container)
+          :article_translations
+
+      Calling `__trans__(:fields)` will return a list with the translatable
+      fields.
+
+          iex(1)> Article.__trans__(:fields)
+          [:title, :body]
+      """
+      @spec __trans__(:container) :: atom
+      @spec __trans__(:fields) :: list(atom)
+      def __trans__(:container), do: unquote(container)
+      def __trans__(:fields), do: unquote(translated_fields)
     end
   end
 
-  defp get_translatables(opts) do
-    case List.keyfind(opts, :translates, 0) do
-      nil -> raise ArgumentError, "You must provide a `translates` option with a list of the translatable fields"
-      {:translates, translatables} when is_list(translatables) -> translatables
-      {:translates, translatables} -> [translatables]
-    end
-  end
-
-  defp get_defaults(opts) do
-    case List.keyfind(opts, :defaults, 0) do
-      nil -> []
-      {:defaults, defaults} -> defaults
-    end
+  defp get_translatables(fields) when is_list(fields), do: fields
+  defp get_translatables(_) do
+    raise ArgumentError, message: "Trans requires a 'translates' option that contains the list of translatable fields names"
   end
 
 end
