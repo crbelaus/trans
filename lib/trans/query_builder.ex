@@ -213,5 +213,18 @@ if Code.ensure_loaded?(Ecto.Query) do
       from translatable in query,
         where: ilike(fragment("?->?->>?", field(translatable, ^container), ^locale, ^field), ^expected)
     end
+
+    defmacro translated(module, to_translate, opts) do
+      # TODO retrieve the translation container name from the module
+      # TODO handle unspecified locale
+      {:ok, locale} = Keyword.fetch(opts, :locale)
+      # Get the translatable and the field from the to_translate AST.
+      {{:., _, [translatable, field]}, _metadata, _args} = to_translate
+
+      quote do
+        fragment("?->?->>?", field(unquote(translatable), :test_translation_container), ^unquote(locale), ^unquote(field))
+      end
+    end
+
   end
 end

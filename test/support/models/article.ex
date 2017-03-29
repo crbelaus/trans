@@ -1,6 +1,6 @@
 defmodule Trans.Article do
   use Ecto.Schema
-  use Trans, translates: [:title, :body], defaults: [container: :test_translation_container]
+  use Trans, translates: [:title, :body], container: :test_translation_container
 
   import Ecto.Changeset
 
