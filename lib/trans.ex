@@ -79,8 +79,6 @@ defmodule Trans do
   """
 
   defmacro __using__(opts) do
-    container = Keyword.get(opts, :container, :translations)
-    translated_fields = get_translatables(opts)
     quote do
       @doc """
       This function provides metadata used by Trans for the `Trans.QueryBuilder`
@@ -111,16 +109,16 @@ defmodule Trans do
           iex(1)> Article.__trans__(:fields)
           [:title, :body]
       """
-      @spec __trans__(:container) :: atom
       @spec __trans__(:fields) :: list(atom)
-      def __trans__(:container), do: unquote(container)
-      def __trans__(:fields), do: unquote(translated_fields)
+      def __trans__(:fields), do: unquote(translatables(opts))
     end
   end
 
-  defp get_translatables(fields) when is_list(fields), do: fields
-  defp get_translatables(_) do
-    raise ArgumentError, message: "Trans requires a 'translates' option that contains the list of translatable fields names"
+  defp translatables(opts) do
+    case Keyword.fetch(opts, :translates) do
+      {:ok, fields} when is_list(fields) -> fields
+      _ -> raise ArgumentError, message: "Trans requires a 'translates' option that contains the list of translatable fields names"
+    end
   end
 
 end
