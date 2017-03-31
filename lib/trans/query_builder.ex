@@ -1,6 +1,5 @@
 if Code.ensure_loaded?(Ecto.Query) do
   defmodule Trans.QueryBuilder do
-    import Ecto.Query, only: [from: 2]
 
     defmacro translated(translatable, opts) do
       generate_query(schema(translatable), field(translatable), locale(opts))
