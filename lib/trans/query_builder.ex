@@ -8,13 +8,13 @@ if Code.ensure_loaded?(Ecto.Query) do
 
     defp generate_query(schema, nil, locale) do
       quote do
-        fragment("?->?", field(unquote(schema), :translations), ^unquote(locale))
+        fragment("(?->?)", field(unquote(schema), :translations), ^unquote(locale))
       end
     end
 
     defp generate_query(schema, field, locale) do
       quote do
-        fragment("?->?->>?", field(unquote(schema), :translations), ^unquote(locale), ^unquote(field))
+        fragment("(?->?->>?)", field(unquote(schema), :translations), ^unquote(locale), ^unquote(field))
       end
     end
 
