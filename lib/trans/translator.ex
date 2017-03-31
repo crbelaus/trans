@@ -102,9 +102,12 @@ defmodule Trans.Translator do
       "Cómo escribir un corrector ortográfico"
 
   """
-  def translate(struct, locale, field, opts \\ []) when is_map(struct) do
-    translation_container = opts[:container] || :translations
-    translated_field = with {:ok, all_translations} <- Map.fetch(struct, translation_container),
+  def translate(struct, locale, field) when is_map(struct) do
+    # Check if the struct is a map or an actual struct.
+    # If it is a struct, check if it uses Trans and if the field is among the translatable fields
+    # Look for `translations` and `"translations"
+    raise_if_untranslatable(struct, field)
+    translated_field = with {:ok, all_translations} <- Map.fetch(struct, translation_container(struct)),
                             {:ok, translations_for_locale} <- Map.fetch(all_translations, to_string(locale)),
                             {:ok, translated_field} <- Map.fetch(translations_for_locale, to_string(field)),
       do: translated_field
@@ -114,5 +117,12 @@ defmodule Trans.Translator do
     end
   end
 
+  defp translation_container(%{translations: _}), do: :translations
+  defp translation_container(%{"translations" => _}), do: "translations"
+  defp translation_container(_) do
+    raise ArgumentError, message: "Translation container not found. You must define a 'translations' field into your map or struct so it can be used by Trans."
+  end
+
+  defp raise_if_untranslatable(_struct, _field), do: nil
 
 end
