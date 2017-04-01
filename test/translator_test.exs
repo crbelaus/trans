@@ -20,15 +20,10 @@ defmodule TranslatorTest do
   end
 
   test "raise error wen translating an untraslatable attribute" do
-    article = build(:article)
-    assert_raise KeyError, fn ->
-      Translator.translate(article, :es, :fake_attr)
+    expected_message = "'fake_attr' is not translatable. Translatable fields are [:title, :body]"
+    assert_raise RuntimeError, expected_message, fn ->
+      Translator.translate(build(:article), :es, :fake_attr)
     end
   end
 
-  test "raise error when no translation container" do
-    assert_raise ArgumentError, fn ->
-      Translator.translate(%{}, :es, :fake_attr)
-    end
-  end
 end
