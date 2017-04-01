@@ -45,8 +45,9 @@ defmodule Trans do
   When used, `Trans` will define a `__trans__` function that can be used for
   runtime introspection of the translation metadata.
 
-  - `__trans__(:fields)` - Returns the list of translatable fields.
-
+  - `__trans__(:fields)` - Returns the list of translatable fields. Fields
+  declared as translatable must be present in the schema or struct declaration
+  of the module.
   """
 
   defmacro __using__(opts) do
@@ -54,6 +55,8 @@ defmodule Trans do
       Module.put_attribute(__MODULE__, :trans_fields, unquote(
         translatable_fields(opts)
       ))
+
+      @after_compile {Trans, :__validate_translatable_fields__}
 
       Module.eval_quoted __ENV__, [
         Trans.__fields__(@trans_fields)
@@ -66,6 +69,23 @@ defmodule Trans do
     quote do
       @spec __trans__(:fields) :: list(atom)
       def __trans__(:fields), do: unquote(fields)
+    end
+  end
+
+  @doc false
+  def __validate_translatable_fields__(%{module: module}, _bytecode) do
+    struct_fields =
+      module.__struct__()
+      |> Map.keys
+      |> MapSet.new
+    translatable_fields =
+      module.__trans__(:fields)
+      |> MapSet.new
+    invalid_fields = MapSet.difference(translatable_fields, struct_fields)
+    case MapSet.size(invalid_fields) do
+      0 -> nil
+      1 -> raise ArgumentError, message: "#{module} declares '#{MapSet.to_list(invalid_fields)}' as translatable but it is not defined in the module's struct"
+      _ -> raise ArgumentError, message: "#{module} declares '#{MapSet.to_list(invalid_fields)}' as translatable but it they not defined in the module's struct"
     end
   end
 
