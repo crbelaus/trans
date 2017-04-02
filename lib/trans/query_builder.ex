@@ -113,7 +113,7 @@ if Code.ensure_loaded?(Ecto.Query) do
           cond do
             is_nil(field) -> nil
             not Trans.translatable?(unquote(module), unquote(field)) ->
-              raise ArgumentError, message: "'#{inspect(unquote(module))}' module must declare '#{inspect(unquote(field))}' as translatable"
+              raise ArgumentError, message: "'#{inspect(unquote(module))}' module must declare '#{unquote(field)}' as translatable"
             true -> nil
           end
         end

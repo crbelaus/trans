@@ -93,12 +93,20 @@ defmodule QueryBuilderTest do
     # Since the QueryBuilder errors are emitted during compilation, we do a
     # little trick to delay the compilation of the query until the test
     # is running, so we can catch the raised error.
-    query = quote do
-      Repo.all(from a in Article,
-        where: not is_nil(translated(Article, a.translations, locale: :es)))
+    invalid_module = quote do
+      defmodule TestWrongQuery do
+        require Ecto.Query
+        import Ecto.Query, only: [from: 2]
+
+        def invalid_query do
+          from a in Article,
+            where: not is_nil(translated(Article, a.translations, locale: :es))
+        end
+      end
     end
-    assert_raise ArgumentError, fn ->
-      Module.eval_quoted __ENV__, query
-    end
+
+    assert_raise ArgumentError,
+      "'Trans.Article' module must declare 'translations' as translatable",
+      fn -> Code.eval_quoted(invalid_module) end
   end
 end
