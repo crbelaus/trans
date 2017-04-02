@@ -1,4 +1,5 @@
 alias Trans.Article
+alias Trans.Comment
 
 import Trans.Factory
 
@@ -22,6 +23,10 @@ defmodule TransTest do
 
   test "returns the default translation container when unspecified" do
     assert Article.__trans__(:container) == :translations
+  end
+
+  test "returns the custom translation container name if specified" do
+    assert Comment.__trans__(:container) == :transcriptions
   end
 
   test "compilation fails when translation container is not a valid field" do
