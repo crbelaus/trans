@@ -63,31 +63,21 @@ defmodule Trans.Translator do
   @spec translate(struct, atom, atom) :: any
   def translate(%{__struct__: module} = struct, locale, field)
   when is_atom(locale) and is_atom(field) do
-    translatable_fields = get_translatable_fields(module)
-    raise_if_untranslatable(translatable_fields, field)
+    unless Trans.translatable?(struct, field) do
+      raise "'#{inspect(module)}' module must declare '#{inspect(field)}' as translatable"
+    end
+    # Return the translation or fall back to the default value
+    case translated_field(struct, locale, field) do
+      :error -> Map.fetch!(struct, field)
+      translation -> translation
+    end
+  end
 
-    translated_field = with {:ok, all_translations} <- Map.fetch(struct, :translations),
-                            {:ok, translations_for_locale} <- Map.fetch(all_translations, to_string(locale)),
-                            {:ok, translated_field} <- Map.fetch(translations_for_locale, to_string(field)),
+  defp translated_field(struct, locale, field) do
+    with {:ok, all_translations}        <- Map.fetch(struct, :translations),
+         {:ok, translations_for_locale} <- Map.fetch(all_translations, to_string(locale)),
+         {:ok, translated_field}        <- Map.fetch(translations_for_locale, to_string(field)),
       do: translated_field
-    case translated_field do
-      :error -> Map.fetch!(struct, field) # Fallback to the default value
-      _ -> translated_field # Return the translated value
-    end
-  end
-
-  defp get_translatable_fields(module) do
-    if module.__info__(:functions)[:__trans__] do
-      module.__trans__(:fields)
-    else
-      raise "#{module} must use `Trans` in order to be translated"
-    end
-  end
-
-  defp raise_if_untranslatable(fields, field) do
-    unless Enum.member?(fields, field) do
-      raise "'#{field}' is not translatable. Translatable fields are #{inspect(fields)}"
-    end
   end
 
 end
