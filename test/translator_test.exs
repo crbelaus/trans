@@ -4,7 +4,6 @@ import Trans.Factory
 
 defmodule TranslatorTest do
   use ExUnit.Case
-  doctest Trans
 
   test "retrieve translation for existing attribute" do
     article = build(:article)

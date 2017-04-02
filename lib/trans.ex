@@ -59,8 +59,49 @@ defmodule Trans do
       @after_compile {Trans, :__validate_translatable_fields__}
 
       Module.eval_quoted __ENV__, [
-        Trans.__fields__(@trans_fields)
+        Trans.__fields__(@trans_fields),
       ]
+    end
+  end
+
+  @doc """
+  Checks whether the given field is translatable or not.
+
+  **Important:** This function will raise an error if the given module does
+  not use `Trans`.
+
+  ## Usage example
+
+  Imagine that we have an _Article_ schema declared as follows:
+
+      defmodule Article do
+        use Ecto.Schema
+        use Trans, translates: [:title, :body]
+
+        schema "articles" do
+          field :title, :string
+          field :body, :string
+          field :translations, :map
+        end
+      end
+
+  If we want to know whether a certain field is translatable or not we can use
+  this function as follows (we can also pass a struct instead of the module
+  name itself):
+
+      iex> Trans.translatable?(Article, :title)
+      true
+  """
+  @spec translatable?(module | struct, String.t | atom) :: boolean
+  def translatable?(%{__struct__: module}, field), do: translatable?(module, field)
+  def translatable?(module_or_struct, field) when is_atom(module_or_struct) and is_binary(field) do
+    translatable?(module_or_struct, String.to_atom(field))
+  end
+  def translatable?(module_or_struct, field) when is_atom(module_or_struct) and is_atom(field) do
+    if  Keyword.has_key?(module_or_struct.__info__(:functions), :__trans__) do
+      Enum.member?(module_or_struct.__trans__(:fields), field)
+    else
+      raise "#{module_or_struct} must use `Trans` in order to be translated"
     end
   end
 
