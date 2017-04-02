@@ -6,8 +6,6 @@ Mix.Task.run "ecto.migrate", ["quiet", "-r", "Trans.TestRepo"]
 
 # Start TestRepo process
 Trans.TestRepo.start_link
-# Start ExMachina
-{:ok, _} = Application.ensure_all_started(:ex_machina)
 # Run tests
 ExUnit.start()
 

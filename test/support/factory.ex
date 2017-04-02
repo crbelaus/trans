@@ -1,9 +1,17 @@
-  alias Trans.Article
+alias Trans.Article
+alias Trans.TestRepo, as: Repo
 
 defmodule Trans.Factory do
-  use ExMachina.Ecto, repo: Trans.TestRepo
 
-  def article_factory do
+  def build(factory, attributes) do
+    factory |> build() |> struct(attributes)
+  end
+
+  def insert(factory, attributes \\ []) do
+    factory |> build(attributes) |> Repo.insert!
+  end
+
+  def build(:article) do
     %Article{
       title: Faker.Lorem.sentence(5, " "),
       body: Faker.Lorem.sentence(10, " "),

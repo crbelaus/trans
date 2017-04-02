@@ -43,7 +43,6 @@ defmodule Trans.Mixfile do
       {:postgrex, "~> 0.11", optional: true},
       {:ecto, "~> 2.1", optional: true},
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:ex_machina, "~> 2.0", only: :test},
       {:faker, "~> 0.7.0", only: :test},
     ]
   end
