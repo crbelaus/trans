@@ -17,7 +17,7 @@ defmodule QueryBuilderTest do
 
   test "should find only one article translated to ES" do
     count = Repo.one(from a in Article,
-      where: not is_nil(translated(a, locale: :es)),
+      where: not is_nil(translated(Article, a, locale: :es)),
       select: count(a.id)
     )
     assert count == 1
@@ -25,7 +25,7 @@ defmodule QueryBuilderTest do
 
   test "should not find any article translated to DE" do
     count = Repo.one(from a in Article,
-      where: not is_nil(translated(a, locale: :de)),
+      where: not is_nil(translated(Article, a, locale: :de)),
       select: count(a.id))
     assert count == 0
   end
@@ -33,7 +33,7 @@ defmodule QueryBuilderTest do
   test "should find an article by its FR title",
   %{translated_article: article} do
     matches = Repo.all(from a in Article,
-      where: translated(a.title, locale: :fr) == ^article.translations["fr"]["title"])
+      where: translated(Article, a.title, locale: :fr) == ^article.translations["fr"]["title"])
     assert Enum.count(matches) == 1
     assert hd(matches).id == article.id
   end
@@ -41,7 +41,7 @@ defmodule QueryBuilderTest do
   test "should not find an article by a non existant translation" do
     count = Repo.one(from a in Article,
       select: count(a.id),
-      where: translated(a.title, locale: :es) == "FAKE TITLE")
+      where: translated(Article, a.title, locale: :es) == "FAKE TITLE")
     assert count == 0
   end
 
@@ -54,7 +54,7 @@ defmodule QueryBuilderTest do
       |> Enum.join(" ")
       |> Kernel.<>("%")
     matches = Repo.all(from a in Article,
-      where: ilike(translated(a.body, locale: :es), ^first_words))
+      where: ilike(translated(Article, a.body, locale: :es), ^first_words))
     assert Enum.count(matches) == 1
     assert hd(matches).id == article.id
   end
@@ -70,7 +70,7 @@ defmodule QueryBuilderTest do
       |> Kernel.<>("%")
     count = Repo.one(from a in Article,
       select: count(a.id),
-      where: like(translated(a.body, locale: :fr), ^first_words))
+      where: like(translated(Article, a.body, locale: :fr), ^first_words))
     assert count == 0
   end
 
@@ -84,8 +84,21 @@ defmodule QueryBuilderTest do
       |> String.upcase
       |> Kernel.<>("%")
     matches = Repo.all(from a in Article,
-      where: ilike(translated(a.body, locale: :fr), ^first_words))
+      where: ilike(translated(Article, a.body, locale: :fr), ^first_words))
     assert Enum.count(matches) == 1
     assert hd(matches).id == article.id
+  end
+
+  test "should raise when adding conditions to an untranslatable field" do
+    # Since the QueryBuilder errors are emitted during compilation, we do a
+    # little trick to delay the compilation of the query until the test
+    # is running, so we can catch the raised error.
+    query = quote do
+      Repo.all(from a in Article,
+        where: not is_nil(translated(Article, a.translations, locale: :es)))
+    end
+    assert_raise ArgumentError, fn ->
+      Module.eval_quoted __ENV__, query
+    end
   end
 end
