@@ -1,4 +1,5 @@
 alias Trans.Article
+alias Trans.Comment
 
 import Trans.Factory
 
@@ -19,4 +20,26 @@ defmodule TransTest do
       assert Trans.translatable?(article, :fake_field) == false
     end
   end
+
+  test "returns the default translation container when unspecified" do
+    assert Article.__trans__(:container) == :translations
+  end
+
+  test "returns the custom translation container name if specified" do
+    assert Comment.__trans__(:container) == :transcriptions
+  end
+
+  test "compilation fails when translation container is not a valid field" do
+    invalid_module = quote do
+      defmodule TestArticle do
+        use Trans, translates: [:title, :body], container: :invalid_container
+        defstruct title: "", body: "", translations: %{}
+      end
+    end
+
+    assert_raise ArgumentError,
+      "The field invalid_container used as the translation container is not defined in Elixir.TestArticle struct",
+      fn -> Code.eval_quoted(invalid_module) end
+  end
+
 end

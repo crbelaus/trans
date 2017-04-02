@@ -73,8 +73,8 @@ defmodule Trans.Translator do
     end
   end
 
-  defp translated_field(struct, locale, field) do
-    with {:ok, all_translations}        <- Map.fetch(struct, :translations),
+  defp translated_field(%{__struct__: module} = struct, locale, field) do
+    with {:ok, all_translations}        <- Map.fetch(struct, module.__trans__(:container)),
          {:ok, translations_for_locale} <- Map.fetch(all_translations, to_string(locale)),
          {:ok, translated_field}        <- Map.fetch(translations_for_locale, to_string(field)),
       do: translated_field

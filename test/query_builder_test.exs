@@ -1,4 +1,5 @@
 alias Trans.Article
+alias Trans.Comment
 alias Trans.TestRepo, as: Repo
 
 import Trans.Factory
@@ -28,6 +29,16 @@ defmodule QueryBuilderTest do
       where: not is_nil(translated(Article, a, locale: :de)),
       select: count(a.id))
     assert count == 0
+  end
+
+  test "should use a custom translation container automaticalle",
+  %{translated_article: article} do
+    with comment <- hd(article.comments) do
+      matches = Repo.all(from c in Comment,
+        where: translated(Comment, c.comment, locale: :fr) == ^comment.transcriptions["fr"]["comment"])
+      assert Enum.count(matches) == 1
+      assert hd(matches).id == comment.id
+    end
   end
 
   test "should find an article by its FR title",
@@ -89,16 +100,51 @@ defmodule QueryBuilderTest do
     assert hd(matches).id == article.id
   end
 
+  test "should find an article looking for one of its comments translations",
+  %{translated_article: article} do
+    with comment <- hd(article.comments).transcriptions["es"]["comment"] do
+      matches = Repo.all(from a in Article,
+        join: c in Comment, on: a.id == c.article_id,
+        where: translated(Comment, c.comment, locale: :es) == ^comment)
+
+      assert Enum.count(matches) == 1
+      assert hd(matches).id == article.id
+    end
+  end
+
+  test "should find an article looking for a translation and one of its comments translations",
+  %{translated_article: article} do
+    with title <- article.translations["fr"]["title"],
+         comment <- hd(article.comments).transcriptions["fr"]["comment"] do
+
+      matches = Repo.all(from a in Article,
+        join: c in Comment, on: a.id == c.article_id,
+        where: translated(Article, a.title, locale: :fr) == ^title,
+        where: translated(Comment, c.comment, locale: :fr) == ^comment)
+
+      assert Enum.count(matches) == 1
+      assert hd(matches).id == article.id
+    end
+  end
+
   test "should raise when adding conditions to an untranslatable field" do
     # Since the QueryBuilder errors are emitted during compilation, we do a
     # little trick to delay the compilation of the query until the test
     # is running, so we can catch the raised error.
-    query = quote do
-      Repo.all(from a in Article,
-        where: not is_nil(translated(Article, a.translations, locale: :es)))
+    invalid_module = quote do
+      defmodule TestWrongQuery do
+        require Ecto.Query
+        import Ecto.Query, only: [from: 2]
+
+        def invalid_query do
+          from a in Article,
+            where: not is_nil(translated(Article, a.translations, locale: :es))
+        end
+      end
     end
-    assert_raise ArgumentError, fn ->
-      Module.eval_quoted __ENV__, query
-    end
+
+    assert_raise ArgumentError,
+      "'Trans.Article' module must declare 'translations' as translatable",
+      fn -> Code.eval_quoted(invalid_module) end
   end
 end

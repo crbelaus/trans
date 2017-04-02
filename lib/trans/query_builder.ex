@@ -75,20 +75,22 @@ if Code.ensure_loaded?(Ecto.Query) do
     """
     defmacro translated(module, translatable, opts) do
       with field <- field(translatable) do
-        Module.eval_quoted(__CALLER__, __validate_fields__(module, field))
-        generate_query(schema(translatable), field, locale(opts))
+        with {module_name, []} <- Module.eval_quoted(__CALLER__, module) do
+          validate_field(module_name, field)
+          generate_query(schema(translatable), module_name, field, locale(opts))
+        end
       end
     end
 
-    defp generate_query(schema, nil, locale) do
+    defp generate_query(schema, module, nil, locale) do
       quote do
-        fragment("(?->?)", field(unquote(schema), :translations), ^unquote(locale))
+        fragment("(?->?)", field(unquote(schema), unquote(module.__trans__(:container))), ^unquote(locale))
       end
     end
 
-    defp generate_query(schema, field, locale) do
+    defp generate_query(schema, module, field, locale) do
       quote do
-        fragment("(?->?->>?)", field(unquote(schema), :translations), ^unquote(locale), ^unquote(field))
+        fragment("(?->?->>?)", field(unquote(schema), unquote(module.__trans__(:container))), ^unquote(locale), ^unquote(field))
       end
     end
 
@@ -106,17 +108,12 @@ if Code.ensure_loaded?(Ecto.Query) do
     defp field({{:., _, [_schema, field]}, _metadata, _args}), do: to_string(field)
     defp field(_), do: nil
 
-    @doc false
-    def __validate_fields__(module, field) do
-      quote do
-        with field <- unquote(field) do
-          cond do
-            is_nil(field) -> nil
-            not Trans.translatable?(unquote(module), unquote(field)) ->
-              raise ArgumentError, message: "'#{inspect(unquote(module))}' module must declare '#{inspect(unquote(field))}' as translatable"
-            true -> nil
-          end
-        end
+    defp validate_field(module, field) do
+      cond do
+        is_nil(field) -> nil
+        not Trans.translatable?(module, field) ->
+          raise ArgumentError, message: "'#{inspect(module)}' module must declare '#{field}' as translatable"
+        true -> nil
       end
     end
 

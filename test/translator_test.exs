@@ -18,6 +18,11 @@ defmodule TranslatorTest do
     assert body == article.body
   end
 
+  test "use custom translation container if required" do
+    comment = build(:comment)
+    assert Translator.translate(comment, :es, :comment) == comment.transcriptions["es"]["comment"]
+  end
+
   test "raise error wen translating an untraslatable attribute" do
     assert_raise RuntimeError, "'Trans.Article' module must declare ':fake_attr' as translatable", fn ->
       Translator.translate(build(:article), :es, :fake_attr)

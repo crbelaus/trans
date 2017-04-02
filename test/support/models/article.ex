@@ -8,9 +8,10 @@ defmodule Trans.Article do
     field :title, :string
     field :body, :string
     field :translations, :map
+    has_many :comments, Trans.Comment
   end
 
-  def changeset(article, params \\ :empty) do
+  def changeset(article, params \\ %{}) do
     article
     |> cast(params, [:title, :body, :translations])
     |> validate_required([:title, :body])
