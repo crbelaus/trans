@@ -48,18 +48,41 @@ defmodule Trans do
   - `__trans__(:fields)` - Returns the list of translatable fields. Fields
   declared as translatable must be present in the schema or struct declaration
   of the module.
+  - `__trans__(:container)` - Returns the name of the translation container field.
+  To learn more about the translation container field see the appropriate section.
+
+  ## The translation container
+
+  By default, `Trans` stores and looks for translations in a field named
+  `translations`. This field is known as the translations container.
+
+  If you need to use a different field name for storing translations, you can
+  specify it when using `Trans` from your module. In this example, we are
+  declaring that the translation container will be named `locales`.
+
+      defmodule Article do
+        use Ecto.Schema
+        use Trans, translates: [:title, :body], container: :locales
+
+        schema "articles" do
+          field :title, :string
+          field :body, :text
+          field :locales, :map
+        end
+      end
   """
 
   defmacro __using__(opts) do
     quote do
-      Module.put_attribute(__MODULE__, :trans_fields, unquote(
-        translatable_fields(opts)
-      ))
+      Module.put_attribute __MODULE__, :trans_fields, unquote(translatable_fields(opts))
+      Module.put_attribute __MODULE__, :trans_container, unquote(translation_container(opts))
 
       @after_compile {Trans, :__validate_translatable_fields__}
+      @after_compile {Trans, :__validate_translation_container__}
 
       Module.eval_quoted __ENV__, [
         Trans.__fields__(@trans_fields),
+        Trans.__container__(@trans_container)
       ]
     end
   end
@@ -114,6 +137,14 @@ defmodule Trans do
   end
 
   @doc false
+  def __container__(container) when is_atom(container) do
+    quote do
+      @spec __trans__(:container) :: atom
+      def __trans__(:container), do: unquote(container)
+    end
+  end
+
+  @doc false
   def __validate_translatable_fields__(%{module: module}, _bytecode) do
     struct_fields =
       module.__struct__()
@@ -130,15 +161,26 @@ defmodule Trans do
     end
   end
 
-  defp translatable_fields(opts) do
-    case Keyword.fetch(opts, :translates) do
-      {:ok, fields} when is_list(fields) -> fields
-      _                                  -> error_must_specify_fields()
+  @doc false
+  def __validate_translation_container__(%{module: module}, _bytecode) do
+    container = module.__trans__(:container)
+    unless Enum.member?(Map.keys(module.__struct__()), container) do
+      raise ArgumentError, message: "The field #{container} used as the translation container is not defined in #{module} struct"
     end
   end
 
-  defp error_must_specify_fields do
-    raise ArgumentError, message: "Trans requires a 'translates' option that contains the list of translatable fields names"
+  defp translatable_fields(opts) do
+    case Keyword.fetch(opts, :translates) do
+      {:ok, fields} when is_list(fields) -> fields
+      _                                  -> raise ArgumentError, message: "Trans requires a 'translates' option that contains the list of translatable fields names"
+    end
+  end
+
+  defp translation_container(opts) do
+    case Keyword.fetch(opts, :container) do
+      :error           -> :translations
+      {:ok, container} -> container
+    end
   end
 
 end
