@@ -7,7 +7,7 @@ defmodule Trans.Factory do
     %Article{
       title: Faker.Lorem.sentence(5, " "),
       body: Faker.Lorem.sentence(10, " "),
-      test_translation_container: %{
+      translations: %{
         "es" => %{
           "title" => Faker.Lorem.sentence(5, " "),
           "body"  => Faker.Lorem.sentence(10, " ")
