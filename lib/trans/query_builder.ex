@@ -36,7 +36,7 @@ if Code.ensure_loaded?(Ecto.Query) do
     This `Ecto.Query` will return all _Articles_ that have an Spanish translation:
 
         iex> Repo.all(from a in Article,
-        ...>   where: not is_nil(translated(Article, a, locale: :es)) )
+        ...>   where: not is_nil(translated(Article, a, :es)) )
 
     The generated SQL is:
 
@@ -49,7 +49,7 @@ if Code.ensure_loaded?(Ecto.Query) do
     This query will return all articles whose French title matches the _"Elixir"_:
 
         iex> Repo.all(from a in Article,
-        ...>   where: translated(Article, a.title, locale: :fr) == "Elixir")
+        ...>   where: translated(Article, a.title, :fr) == "Elixir")
 
     The generated SQL is:
 
@@ -63,7 +63,7 @@ if Code.ensure_loaded?(Ecto.Query) do
     body, igoring case.
 
         iex> Repo.all(from a in Article,
-        ...> where: ilike(translated(Article, a.body, locale: :es), "%elixir%"))
+        ...> where: ilike(translated(Article, a.body, :es), "%elixir%"))
 
     The generated SQL is:
 
@@ -73,11 +73,11 @@ if Code.ensure_loaded?(Ecto.Query) do
 
 
     """
-    defmacro translated(module, translatable, opts) do
+    defmacro translated(module, translatable, locale) do
       with field <- field(translatable) do
         with {module_name, []} <- Module.eval_quoted(__CALLER__, module) do
           validate_field(module_name, field)
-          generate_query(schema(translatable), module_name, field, locale(opts))
+          generate_query(schema(translatable), module_name, field, locale(locale))
         end
       end
     end
@@ -94,13 +94,9 @@ if Code.ensure_loaded?(Ecto.Query) do
       end
     end
 
-    defp locale(opts) do
-      case Keyword.fetch(opts, :locale) do
-        {:ok, locale} when is_atom(locale)   -> to_string(locale)
-        {:ok, locale} when is_binary(locale) -> locale
-        _ -> raise ArgumentError, mesage: "You must specify a locale for the query. For example `translated(x.field, locale: :en)`."
-      end
-    end
+    defp locale(locale) when is_atom(locale) and not is_nil(locale), do: to_string(locale)
+    defp locale(locale) when is_binary(locale), do: locale
+    defp locale(_), do: raise ArgumentError, message: "The locale code must be either an atom or a string"
 
     defp schema({{:., _, [schema, _field]}, _metadata, _args}), do: schema
     defp schema(schema), do: schema

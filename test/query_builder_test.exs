@@ -18,7 +18,7 @@ defmodule QueryBuilderTest do
 
   test "should find only one article translated to ES" do
     count = Repo.one(from a in Article,
-      where: not is_nil(translated(Article, a, locale: :es)),
+      where: not is_nil(translated(Article, a, :es)),
       select: count(a.id)
     )
     assert count == 1
@@ -26,7 +26,7 @@ defmodule QueryBuilderTest do
 
   test "should not find any article translated to DE" do
     count = Repo.one(from a in Article,
-      where: not is_nil(translated(Article, a, locale: :de)),
+      where: not is_nil(translated(Article, a, :de)),
       select: count(a.id))
     assert count == 0
   end
@@ -35,7 +35,7 @@ defmodule QueryBuilderTest do
   %{translated_article: article} do
     with comment <- hd(article.comments) do
       matches = Repo.all(from c in Comment,
-        where: translated(Comment, c.comment, locale: :fr) == ^comment.transcriptions["fr"]["comment"])
+        where: translated(Comment, c.comment, :fr) == ^comment.transcriptions["fr"]["comment"])
       assert Enum.count(matches) == 1
       assert hd(matches).id == comment.id
     end
@@ -44,7 +44,7 @@ defmodule QueryBuilderTest do
   test "should find an article by its FR title",
   %{translated_article: article} do
     matches = Repo.all(from a in Article,
-      where: translated(Article, a.title, locale: :fr) == ^article.translations["fr"]["title"])
+      where: translated(Article, a.title, :fr) == ^article.translations["fr"]["title"])
     assert Enum.count(matches) == 1
     assert hd(matches).id == article.id
   end
@@ -52,7 +52,7 @@ defmodule QueryBuilderTest do
   test "should not find an article by a non existant translation" do
     count = Repo.one(from a in Article,
       select: count(a.id),
-      where: translated(Article, a.title, locale: :es) == "FAKE TITLE")
+      where: translated(Article, a.title, :es) == "FAKE TITLE")
     assert count == 0
   end
 
@@ -65,7 +65,7 @@ defmodule QueryBuilderTest do
       |> Enum.join(" ")
       |> Kernel.<>("%")
     matches = Repo.all(from a in Article,
-      where: ilike(translated(Article, a.body, locale: :es), ^first_words))
+      where: ilike(translated(Article, a.body, :es), ^first_words))
     assert Enum.count(matches) == 1
     assert hd(matches).id == article.id
   end
@@ -81,7 +81,7 @@ defmodule QueryBuilderTest do
       |> Kernel.<>("%")
     count = Repo.one(from a in Article,
       select: count(a.id),
-      where: like(translated(Article, a.body, locale: :fr), ^first_words))
+      where: like(translated(Article, a.body, :fr), ^first_words))
     assert count == 0
   end
 
@@ -95,7 +95,7 @@ defmodule QueryBuilderTest do
       |> String.upcase
       |> Kernel.<>("%")
     matches = Repo.all(from a in Article,
-      where: ilike(translated(Article, a.body, locale: :fr), ^first_words))
+      where: ilike(translated(Article, a.body, :fr), ^first_words))
     assert Enum.count(matches) == 1
     assert hd(matches).id == article.id
   end
@@ -105,7 +105,7 @@ defmodule QueryBuilderTest do
     with comment <- hd(article.comments).transcriptions["es"]["comment"] do
       matches = Repo.all(from a in Article,
         join: c in Comment, on: a.id == c.article_id,
-        where: translated(Comment, c.comment, locale: :es) == ^comment)
+        where: translated(Comment, c.comment, :es) == ^comment)
 
       assert Enum.count(matches) == 1
       assert hd(matches).id == article.id
@@ -119,8 +119,8 @@ defmodule QueryBuilderTest do
 
       matches = Repo.all(from a in Article,
         join: c in Comment, on: a.id == c.article_id,
-        where: translated(Article, a.title, locale: :fr) == ^title,
-        where: translated(Comment, c.comment, locale: :fr) == ^comment)
+        where: translated(Article, a.title, :fr) == ^title,
+        where: translated(Comment, c.comment, :fr) == ^comment)
 
       assert Enum.count(matches) == 1
       assert hd(matches).id == article.id
@@ -138,13 +138,31 @@ defmodule QueryBuilderTest do
 
         def invalid_query do
           from a in Article,
-            where: not is_nil(translated(Article, a.translations, locale: :es))
+            where: not is_nil(translated(Article, a.translations, :es))
         end
       end
     end
 
     assert_raise ArgumentError,
       "'Trans.Article' module must declare 'translations' as translatable",
+      fn -> Code.eval_quoted(invalid_module) end
+  end
+
+  test "should raise when an invalid locale is specified" do
+    invalid_module = quote do
+      defmodule TestWrongQuery do
+        require Ecto.Query
+        import Ecto.Query, only: [from: 2]
+
+        def invalid_query do
+          from a in Article,
+            where: not is_nil(translated(Article, a.title, nil))
+        end
+      end
+    end
+
+    assert_raise ArgumentError,
+      "The locale code must be either an atom or a string",
       fn -> Code.eval_quoted(invalid_module) end
   end
 end
