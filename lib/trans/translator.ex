@@ -4,7 +4,7 @@ defmodule Trans.Translator do
   to a default locale when the translation does not exist in the required one.
 
   The functions provided by this module require structs declared in modules
-  that use `Trans`.
+  using `Trans`.
   """
 
   @doc """
@@ -26,8 +26,8 @@ defmodule Trans.Translator do
         end
       end
 
-  We may have an `Article` like this (Our main locale is _:en_, but we have
-  translations in _:es_ and _:fr_):
+  We may have an `Article` like this (Our main locale is `:en`, but we have
+  translations in `:es` and `:fr`):
 
       iex> article = %Article{
       ...>   title: "How to Write a Spelling Corrector",
@@ -46,22 +46,22 @@ defmodule Trans.Translator do
 
   We can then get the Spanish title:
 
-      iex> Trans.Translator.translate(article, :es, :title)
+      iex> Trans.Translator.translate(article, :title, :es)
       "Cómo escribir un corrector ortográfico"
 
   If the requested locale is not available, the default value will be returned:
 
-      iex> Trans.Translator.translate(article, :de, :title)
+      iex> Trans.Translator.translate(article, :title, :de)
       "How to Write a Spelling Corrector"
 
   If we request a translation for an invalid field, we will receive an error:
 
-      iex> Trans.Translator.Translate(article, :es, :fake_attr)
+      iex> Trans.Translator.Translate(article, :fake_attr, :es)
       ** (RuntimeError) 'fake_attr' is not translatable. Translatable fields are [:title, :body]
 
   """
   @spec translate(struct, atom, atom) :: any
-  def translate(%{__struct__: module} = struct, locale, field)
+  def translate(%{__struct__: module} = struct, field, locale)
   when is_atom(locale) and is_atom(field) do
     unless Trans.translatable?(struct, field) do
       raise "'#{inspect(module)}' module must declare '#{inspect(field)}' as translatable"

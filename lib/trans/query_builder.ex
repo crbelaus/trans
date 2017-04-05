@@ -36,7 +36,7 @@ if Code.ensure_loaded?(Ecto.Query) do
     This `Ecto.Query` will return all _Articles_ that have an Spanish translation:
 
         iex> Repo.all(from a in Article,
-        ...>   where: not is_nil(translated(Article, a, :es)) )
+        ...>   where: not is_nil(translated(Article, a, :es)))
 
     The generated SQL is:
 
@@ -71,6 +71,11 @@ if Code.ensure_loaded?(Ecto.Query) do
         FROM "articles" AS a0
         WHERE ((a0."translations"->"es"->>"body") ILIKE "%elixir%")
 
+    **More complex queries**
+
+    The `translated/3` macro can also be used with relations and joined schemas.
+    For more complex examples take a look at the QueryBuilder tests (the file
+    is locaed in `test/query_builder_test.ex`).
 
     """
     defmacro translated(module, translatable, locale) do
