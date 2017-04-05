@@ -134,8 +134,8 @@ required SQL fragment for us.
 iex> Repo.all(from a in Article,
 ...>   where: not is_nil(translated(Article, a, :es)))
 # SELECT a0."id", a0."title", a0."body", a0."translations"
-#         FROM "articles" AS a0
-#        WHERE (NOT ((a0."translations"->"es") IS NULL))
+# FROM "articles" AS a0
+# WHERE (NOT ((a0."translations"->"es") IS NULL))
 ```
 
 We can also get more specific and fetch only those articles for which their
@@ -231,6 +231,6 @@ and `Trans.QueryBuilder` will automatically look for translations in the correct
 iex> Repo.all(from a in Article,
 ...>   where: not is_nil(translated(Article, a, :es)))
 # SELECT a0."id", a0."title", a0."body", a0."article_translations"
-#         FROM "articles" AS a0
-#        WHERE (NOT ((a0."article_translations"->"es") IS NULL))
+# FROM "articles" AS a0
+# WHERE (NOT ((a0."article_translations"->"es") IS NULL))
 ```
