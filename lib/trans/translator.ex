@@ -4,7 +4,7 @@ defmodule Trans.Translator do
   to a default locale when the translation does not exist in the required one.
 
   The functions provided by this module require structs declared in modules
-  that use `Trans`.
+  using `Trans`.
   """
 
   @doc """
@@ -26,8 +26,8 @@ defmodule Trans.Translator do
         end
       end
 
-  We may have an `Article` like this (Our main locale is _:en_, but we have
-  translations in _:es_ and _:fr_):
+  We may have an `Article` like this (Our main locale is `:en`, but we have
+  translations in `:es` and `:fr`):
 
       iex> article = %Article{
       ...>   title: "How to Write a Spelling Corrector",
