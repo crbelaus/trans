@@ -6,21 +6,18 @@ defmodule Trans do
 
   ## What does this package do?
 
-  `Trans` allows you to store translations of a struct embedded into a filed of
-  that struct.
+  `Trans` allows you to store translations for a struct embedded into a field of
+  that struct itself.
 
-  Trans is split into two main components:
+  `Trans` is split into two main components:
 
   - `Trans.Translator` - allows to easily access translated values from structs
   and automatically fallbacks to the default value when the translation does
-  not exist in the required locale. If you want to get translations from a
-  struct you should take a look at this module.
+  not exist in the required locale.
   - `Trans.QueryBuilder` - adds conditions to `Ecto.Query` for filtering values
-  of translated fields. If you want to get data from the database filtered by
-  conditions on the translated fields you should take a look at this module. This
-  module will be available only if `Ecto` is available.
+  of translated fields. This module will be available only if `Ecto` is available.
 
-  Trans shines when paired with an `Ecto.Schema`. It allows you to keep the
+  `Trans` shines when paired with an `Ecto.Schema`. It allows you to keep the
   translations into a field of the schema and avoids requiring extra tables for
   translation storage and complex _joins_ when retrieving translations from the
   database.
@@ -46,10 +43,9 @@ defmodule Trans do
   runtime introspection of the translation metadata.
 
   - `__trans__(:fields)` - Returns the list of translatable fields. Fields
-  declared as translatable must be present in the schema or struct declaration
-  of the module.
-  - `__trans__(:container)` - Returns the name of the translation container field.
-  To learn more about the translation container field see the appropriate section.
+  declared as translatable must be present in the module's schema or struct declaration.
+  - `__trans__(:container)` - Returns the name of the _translation container_ field.
+  To learn more about the _translation container_ field see the following section.
 
   ## The translation container
 
@@ -57,8 +53,8 @@ defmodule Trans do
   `translations`. This field is known as the translations container.
 
   If you need to use a different field name for storing translations, you can
-  specify it when using `Trans` from your module. In this example, we are
-  declaring that the translation container will be named `locales`.
+  specify it when using `Trans` from your module. In the following example,
+  `Trans` will store and look for translations in the field `locales`.
 
       defmodule Article do
         use Ecto.Schema
@@ -114,6 +110,8 @@ defmodule Trans do
 
       iex> Trans.translatable?(Article, :title)
       true
+      iex> Trans.translatable?(%Article{}, :not_existing)
+      false
   """
   @spec translatable?(module | struct, String.t | atom) :: boolean
   def translatable?(%{__struct__: module}, field), do: translatable?(module, field)
