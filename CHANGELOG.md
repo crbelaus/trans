@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Update the `Translator` module to use the new underscore functions.
 - Update documentation and improve the tests.
 
+## 1.1.0 - 2017-02-28
+- Make `Ecto` an optional dependency. If `Ecto` is not available the `QueryBuilder` module will not be compiled.
+
 ## 1.0.2 - 2017-02-19
 - Remove `earmark` as a direct dependency since it is already required by `ex_doc`.
 - Remove warnings when compiling with Elixir 1.4.
