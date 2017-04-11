@@ -1,60 +1,97 @@
 defmodule Trans do
-  @moduledoc """
-  Trans provides a way to manage and query translations embedded into schemas
-  and removes the necessity of maintaing extra tables only for translation storage.
-
-  Trans is split into 2 main components:
-
-  * `Trans.Translator` - provides functions to easily access translated values
-  from schemas and fallback to a default locale when the translation does not
-  exist in the required one.  **If you want to get translations from a schema you
-  should take a look at this module**.
-  * `Trans.QueryBuilder` - provides functions that can be chained in queries and
-  allow filtering by translated values.  **If you want to filter queries using
-  translated fields you should take a look at this module**. To use this module
-  you must have `Ecto` among your dependencies.
+  @moduledoc ~S"""
+  `Trans` provides a way to manage and query translations embedded into schemas
+  and removes the necessity of maintaining extra tables only for translation
+  storage.
 
   ## What does this package do?
 
-  `Trans` allows you to store translations of a Struct as an extra field of
-  that Struct.
+  `Trans` allows you to store translations for a struct embedded into a field of
+  that struct itself.
 
-  `Trans` sees its main utility when it is used on `Ecto.Schema` modules.
-  **When paired with an `Ecto.Schema`, `Trans` allows you to keep the schema and
-  its translations on the same database table.**  This removes the necessity of
-  spreading the schema and its translations on multiple tables and reduces the
-  number of required *JOINs* that must be performed on queries.
+  `Trans` is split into two main components:
 
-  The field that stores the translations on the Struct is called the *translation
-  container* and by default it is expected to be named `translations`, but
-  that can be easily overriden.
+  - `Trans.Translator` - allows to easily access translated values from structs
+  and automatically fallbacks to the default value when the translation does
+  not exist in the required locale.
+  - `Trans.QueryBuilder` - adds conditions to `Ecto.Query` for filtering values
+  of translated fields. This module will be available only if `Ecto` is available.
+
+  `Trans` shines when paired with an `Ecto.Schema`. It allows you to keep the
+  translations into a field of the schema and avoids requiring extra tables for
+  translation storage and complex _joins_ when retrieving translations from the
+  database.
 
   ## What does this module do?
 
-  Although it does not provide any functions that can be used directly
-  (those functions are provided by the `Trans.Translator` and `Trans.QueryBuilder`
-  modules), using the `Trans` module provides two main benefits:
+  This module provides the required metadata for `Trans.Translator` and
+  `Trans.QueryBuilder` modules. You can use `Trans` in your module like in the
+  following example (usage of `Ecto.Schema` and schema declaration are optional):
 
-  - **Checking the safety of the translation operations** - When your schema uses
-  `Trans` it will safe check the queries that filter on a translated field.  This
-  means that trying to set a translation filter for an untranslated field will
-  produce a error when building the query.
+      defmodule Article do
+        use Ecto.Schema
+        use Trans, translates: [:title, :body]
 
-  - **Avoiding the repetition of default options** - If your schema's
-  *translation container* receives a different name than the default
-  `translations`, it would have to be specified on every call to
-  `Trans.QueryBuilder` or `Trans.Translator` functions. When using the `Trans`
-  module, this setting can be specified once an applied automatically when required.
+        schema "articles" do
+          field :title, :string
+          field :body, :text
+          field :translations, :map
+        end
+      end
 
-  ## Usage examples
+  When used, `Trans` will define a `__trans__` function that can be used for
+  runtime introspection of the translation metadata.
 
-  The general way to use `Trans` in a module is:
+  - `__trans__(:fields)` - Returns the list of translatable fields. Fields
+  declared as translatable must be present in the module's schema or struct declaration.
+  - `__trans__(:container)` - Returns the name of the _translation container_ field.
+  To learn more about the _translation container_ field see the following section.
 
-      use Trans, translates: [:field_1, :field_2][, defaults: [...]]
+  ## The translation container
 
-  Suppose that you have an `Article` schema that has a title and a body that must
-  be translated.  You can set up the convenience functions in your module
-  like the following example:
+  By default, `Trans` stores and looks for translations in a field named
+  `translations`. This field is known as the translations container.
+
+  If you need to use a different field name for storing translations, you can
+  specify it when using `Trans` from your module. In the following example,
+  `Trans` will store and look for translations in the field `locales`.
+
+      defmodule Article do
+        use Ecto.Schema
+        use Trans, translates: [:title, :body], container: :locales
+
+        schema "articles" do
+          field :title, :string
+          field :body, :text
+          field :locales, :map
+        end
+      end
+  """
+
+  defmacro __using__(opts) do
+    quote do
+      Module.put_attribute __MODULE__, :trans_fields, unquote(translatable_fields(opts))
+      Module.put_attribute __MODULE__, :trans_container, unquote(translation_container(opts))
+
+      @after_compile {Trans, :__validate_translatable_fields__}
+      @after_compile {Trans, :__validate_translation_container__}
+
+      Module.eval_quoted __ENV__, [
+        Trans.__fields__(@trans_fields),
+        Trans.__container__(@trans_container)
+      ]
+    end
+  end
+
+  @doc """
+  Checks whether the given field is translatable or not.
+
+  **Important:** This function will raise an error if the given module does
+  not use `Trans`.
+
+  ## Usage example
+
+  Imagine that we have an _Article_ schema declared as follows:
 
       defmodule Article do
         use Ecto.Schema
@@ -67,60 +104,80 @@ defmodule Trans do
         end
       end
 
-  Now imagine that the `Article` schema uses a different *translation container*
-  to store the translations.  This should be specified when using `Trans` so
-  it can automatically provide the required defaults to `Trans.QueryBuilder`
-  and `Trans.Translator` like the following example:
+  If we want to know whether a certain field is translatable or not we can use
+  this function as follows (we can also pass a struct instead of the module
+  name itself):
 
-      defmodule Article do
-        use Ecto.Schema
-        use Trans, defaults: [container: :article_translations],
-          translates: [:title, :body]
-
-        schema "articles" do
-          field :title, :string
-          field :body, :string
-          field :article_translations, :map
-        end
-      end
-
+      iex> Trans.translatable?(Article, :title)
+      true
+      iex> Trans.translatable?(%Article{}, :not_existing)
+      false
   """
-
-  defmacro __using__(opts) do
-    setup_convenience_functions(get_defaults(opts), get_translatables(opts))
+  @spec translatable?(module | struct, String.t | atom) :: boolean
+  def translatable?(%{__struct__: module}, field), do: translatable?(module, field)
+  def translatable?(module_or_struct, field) when is_atom(module_or_struct) and is_binary(field) do
+    translatable?(module_or_struct, String.to_atom(field))
+  end
+  def translatable?(module_or_struct, field) when is_atom(module_or_struct) and is_atom(field) do
+    if  Keyword.has_key?(module_or_struct.__info__(:functions), :__trans__) do
+      Enum.member?(module_or_struct.__trans__(:fields), field)
+    else
+      raise "#{module_or_struct} must use `Trans` in order to be translated"
+    end
   end
 
-  defp setup_convenience_functions(defaults, translatables) do
+  @doc false
+  def __fields__(fields) when is_list(fields) do
     quote do
-      if Code.ensure_compiled?(Trans.QueryBuilder) do
-        # Wrapper of Trans.QueryBuilder.with_translations/3
-        def with_translations(query, locale, opts \\ []) do
-          Trans.QueryBuilder.with_translations(query, locale, opts ++ unquote(defaults))
-        end
-
-        # Wrapper of Trans.QueryBuilder.with_translations
-        def with_translation(query, locale, field, expected, opts \\ []) do
-          if not Enum.member?(unquote(translatables), field) do
-            raise ArgumentError, "The field `#{field}` is not declared as translatable"
-          end
-          Trans.QueryBuilder.with_translation(query, locale, field, expected, opts ++ unquote(defaults))
-        end
-      end
+      @spec __trans__(:fields) :: list(atom)
+      def __trans__(:fields), do: unquote(fields)
     end
   end
 
-  defp get_translatables(opts) do
-    case List.keyfind(opts, :translates, 0) do
-      nil -> raise ArgumentError, "You must provide a `translates` option with a list of the translatable fields"
-      {:translates, translatables} when is_list(translatables) -> translatables
-      {:translates, translatables} -> [translatables]
+  @doc false
+  def __container__(container) when is_atom(container) do
+    quote do
+      @spec __trans__(:container) :: atom
+      def __trans__(:container), do: unquote(container)
     end
   end
 
-  defp get_defaults(opts) do
-    case List.keyfind(opts, :defaults, 0) do
-      nil -> []
-      {:defaults, defaults} -> defaults
+  @doc false
+  def __validate_translatable_fields__(%{module: module}, _bytecode) do
+    struct_fields =
+      module.__struct__()
+      |> Map.keys
+      |> MapSet.new
+    translatable_fields =
+      module.__trans__(:fields)
+      |> MapSet.new
+    invalid_fields = MapSet.difference(translatable_fields, struct_fields)
+    case MapSet.size(invalid_fields) do
+      0 -> nil
+      1 -> raise ArgumentError, message: "#{module} declares '#{MapSet.to_list(invalid_fields)}' as translatable but it is not defined in the module's struct"
+      _ -> raise ArgumentError, message: "#{module} declares '#{MapSet.to_list(invalid_fields)}' as translatable but it they not defined in the module's struct"
+    end
+  end
+
+  @doc false
+  def __validate_translation_container__(%{module: module}, _bytecode) do
+    container = module.__trans__(:container)
+    unless Enum.member?(Map.keys(module.__struct__()), container) do
+      raise ArgumentError, message: "The field #{container} used as the translation container is not defined in #{module} struct"
+    end
+  end
+
+  defp translatable_fields(opts) do
+    case Keyword.fetch(opts, :translates) do
+      {:ok, fields} when is_list(fields) -> fields
+      _                                  -> raise ArgumentError, message: "Trans requires a 'translates' option that contains the list of translatable fields names"
+    end
+  end
+
+  defp translation_container(opts) do
+    case Keyword.fetch(opts, :container) do
+      :error           -> :translations
+      {:ok, container} -> container
     end
   end
 

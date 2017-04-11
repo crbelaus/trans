@@ -2,16 +2,18 @@ defmodule Trans.Translator do
   @moduledoc """
   Provides functions to easily access translated values from schemas and fallback
   to a default locale when the translation does not exist in the required one.
+
+  The functions provided by this module require structs declared in modules
+  using `Trans`.
   """
 
   @doc """
-  Gets the translated value for the given locale and field. If the field is not
-  translated into the required locale, the default locale will be used.
+  Gets a translated value into the given locale or falls back to the default
+  value if there is no translation available.
 
-  ## Usage example (basic)
+  ## Usage example
 
-  Imagine that we have an `Article` schema wich has a title and a body that must
-  be translated:
+  Imagine that we have an _Article_ schema declared as follows:
 
       defmodule Article do
         use Ecto.Schema
@@ -24,8 +26,8 @@ defmodule Trans.Translator do
         end
       end
 
-  We may have an `Article` like this (Our main locale is EN, but we have
-  translations in ES and FR):
+  We may have an `Article` like this (Our main locale is `:en`, but we have
+  translations in `:es` and `:fr`):
 
       iex> article = %Article{
       ...>   title: "How to Write a Spelling Corrector",
@@ -42,77 +44,40 @@ defmodule Trans.Translator do
       ...>   }
       ...> }
 
-  We can then get the title translated into ES:
+  We can then get the Spanish title:
 
-      iex> Trans.Translator.translate(article, :es, :title)
+      iex> Trans.Translator.translate(article, :title, :es)
       "Cómo escribir un corrector ortográfico"
 
-  If we try to get the title translated into a non available locale, Trans will
-  automatically fallback to the default one.
+  If the requested locale is not available, the default value will be returned:
 
-      iex> Trans.Translator.translate(article, :de, :title)
+      iex> Trans.Translator.translate(article, :title, :de)
       "How to Write a Spelling Corrector"
 
-  ## Usage example (different *translation container*)
+  If we request a translation for an invalid field, we will receive an error:
 
-  As stated in the documentation of `Trans`, the *translation container* is the
-  field that contains the list of translations for the struct.
-
-  By default this function looks for the translations in a field called
-  `translations`.  If your struct stores the translations in a different field,
-  it should be specified when calling this function.
-
-  Imagine that we have an `Article` schema like the previous example, but this
-  time the translations will be stored in the field `article_translations`:
-
-      defmodule Article do
-        use Ecto.Schema
-        use Trans, defaults: [container: :article_translations],
-          translates: [:title, :body]
-
-        schema "articles" do
-          field :title, :string
-          field :body, :string
-          field :article_translations, :map
-        end
-      end
-
-  We may have an `Article` like this (Our main locale is EN, but we have
-  translations in ES and FR):
-
-      iex> article = %Article{
-      ...>   title: "How to Write a Spelling Corrector",
-      ...>   body: "A wonderful article by Peter Norvig",
-      ...>   article_translations: %{
-      ...>     "es" => %{
-      ...>       title: "Cómo escribir un corrector ortográfico",
-      ...>       body: "Un artículo maravilloso de Peter Norvig"
-      ...>     },
-      ...>     "fr" => %{
-      ...>        title: "Comment écrire un correcteur orthographique",
-      ...>        body: "Un merveilleux article de Peter Norvig"
-      ...>      }
-      ...>   }
-      ...> }
-
-  We can translate any field as usual, but the translation container must be
-  explicitly specified.
-
-      iex> Trans.Translator.translate(article, :es, :title, container: :article_translations)
-      "Cómo escribir un corrector ortográfico"
+      iex> Trans.Translator.Translate(article, :fake_attr, :es)
+      ** (RuntimeError) 'fake_attr' is not translatable. Translatable fields are [:title, :body]
 
   """
-  def translate(struct, locale, field, opts \\ []) when is_map(struct) do
-    translation_container = opts[:container] || :translations
-    translated_field = with {:ok, all_translations} <- Map.fetch(struct, translation_container),
-                            {:ok, translations_for_locale} <- Map.fetch(all_translations, to_string(locale)),
-                            {:ok, translated_field} <- Map.fetch(translations_for_locale, to_string(field)),
-      do: translated_field
-    case translated_field do
-      :error -> Map.fetch!(struct, field) # Fallback to the default value
-      _ -> translated_field # Return the translated value
+  @spec translate(struct, atom, atom) :: any
+  def translate(%{__struct__: module} = struct, field, locale)
+  when is_atom(locale) and is_atom(field) do
+    unless Trans.translatable?(struct, field) do
+      raise "'#{inspect(module)}' module must declare '#{inspect(field)}' as translatable"
+    end
+    # Return the translation or fall back to the default value
+    case translated_field(struct, locale, field) do
+      :error -> Map.fetch!(struct, field)
+      translation -> translation
     end
   end
 
+  defp translated_field(%{__struct__: module} = struct, locale, field) do
+    with {:ok, all_translations}        <- Map.fetch(struct, module.__trans__(:container)),
+         {:ok, translations_for_locale} <- Map.fetch(all_translations, to_string(locale)),
+         {:ok, translated_field}        <- Map.fetch(translations_for_locale, to_string(field)),
+      do: translated_field
+  end
 
 end
