@@ -149,7 +149,8 @@ defmodule Trans do
       |> Map.keys
       |> MapSet.new
     translatable_fields =
-      module.__trans__(:fields)
+      :fields
+      |> module.__trans__
       |> MapSet.new
     invalid_fields = MapSet.difference(translatable_fields, struct_fields)
     case MapSet.size(invalid_fields) do
