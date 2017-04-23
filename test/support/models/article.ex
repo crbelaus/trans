@@ -1,4 +1,6 @@
 defmodule Trans.Article do
+  @moduledoc false
+
   use Ecto.Schema
   use Trans, translates: [:title, :body]
 

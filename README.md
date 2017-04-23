@@ -1,6 +1,7 @@
 # Trans
 
 [![Travis](https://img.shields.io/travis/belaustegui/trans.svg?maxAge=2592000&&style=flat-square)](https://travis-ci.org/belaustegui/trans)
+[![Ebert](https://ebertapp.io/github/belaustegui/trans.svg)](https://ebertapp.io/github/belaustegui/trans)
 [![Hex.pm](https://img.shields.io/hexpm/dt/trans.svg?maxAge=2592000&style=flat-square)](https://hex.pm/packages/trans)
 
 `Trans` provides a way to manage and query translations embedded into schemas

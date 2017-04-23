@@ -1,4 +1,6 @@
 defmodule Trans.Comment do
+  @moduledoc false
+
   use Ecto.Schema
   use Trans, translates: [:comment], container: :transcriptions
 
