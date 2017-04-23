@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+- Integrate Ebert for code style checks and static analysis.
+
 ## 2.0.0 - 2017-04-11
 - Rewrite the `Trans` module to use underscore functions to store configuration.
 - Rewrite the `QueryBuilder` module to unify previous functions into a single macro with compile time checks. Translations can now be used directly when building queries and are compatible with functions and macros provided by `Ecto.Query` and `Ecto.Query.Api`.
