@@ -3,6 +3,7 @@ alias Trans.Comment
 alias Trans.TestRepo, as: Repo
 
 defmodule Trans.Factory do
+  @moduledoc false
 
   def build(factory, attributes) do
     factory |> build() |> struct(attributes)
