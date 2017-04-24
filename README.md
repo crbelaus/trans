@@ -1,6 +1,6 @@
 # Trans
 
-[![Travis](https://img.shields.io/travis/belaustegui/trans.svg?maxAge=2592000&&style=flat-square)](https://travis-ci.org/belaustegui/trans)
+[![Travis](https://travis-ci.org/belaustegui/trans.svg?branch=master)](https://travis-ci.org/belaustegui/trans)
 [![Ebert](https://ebertapp.io/github/belaustegui/trans.svg)](https://ebertapp.io/github/belaustegui/trans)
 [![Hex.pm](https://img.shields.io/hexpm/dt/trans.svg?maxAge=2592000&style=flat-square)](https://hex.pm/packages/trans)
 
