@@ -63,7 +63,7 @@ defmodule MyApp.Repo.Migrations.AddTranslationsToArticles do
   use Ecto.Migration
 
   def change do
-    update table(:articles) do
+    alter table(:articles) do
       add :translations, :map
     end
   end
