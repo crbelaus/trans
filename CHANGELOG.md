@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 - Integrate Ebert for code style checks and static analysis.
+- Fix typos and mistakes in README.
 
 ## 2.0.0 - 2017-04-11
 - Rewrite the `Trans` module to use underscore functions to store configuration.
