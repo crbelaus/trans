@@ -13,6 +13,8 @@ gem for Ruby.
 `Trans` is published on [hex.pm](https://hex.pm/packages/trans) and the documentation
 is also [available online](https://hexdocs.pm/trans/).
 
+On April 17th, 2017, `Trans` was [featured in HackerNoon](https://hackernoon.com/introducing-trans2-407610887068)
+
 ## Optional Requirements
 
 Having Ecto and Postgrex in your application will allow you to use the `Trans.QueryBuilder`
