@@ -39,7 +39,7 @@ defmodule Trans.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:poison, "~> 2.1"},
+      {:poison, ">= 2.1.0"},
       {:postgrex, "~> 0.11", optional: true},
       {:ecto, "~> 2.1", optional: true},
       {:ex_doc, ">= 0.0.0", only: :dev},
