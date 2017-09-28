@@ -148,21 +148,10 @@ defmodule QueryBuilderTest do
       fn -> Code.eval_quoted(invalid_module) end
   end
 
-  test "should raise when an invalid locale is specified" do
-    invalid_module = quote do
-      defmodule TestWrongQuery do
-        require Ecto.Query
-        import Ecto.Query, only: [from: 2]
-
-        def invalid_query do
-          from a in Article,
-            where: not is_nil(translated(Article, a.title, nil))
-        end
-      end
-    end
-
-    assert_raise ArgumentError,
-      "The locale code must be either an atom or a string",
-      fn -> Code.eval_quoted(invalid_module) end
+  test "should allow passing the locale from a variable" do
+    locale = :es
+    articles = Repo.all(from a in Article,
+      order_by: translated(Article, a.title, locale))
+    assert Enum.any?(articles)
   end
 end
