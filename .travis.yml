@@ -1,12 +1,7 @@
 language: elixir
 elixir:
-  - 1.3.2
-  - 1.3.3
   - 1.3.4
-  - 1.4.0
-  - 1.4.1
-  - 1.4.2
-  - 1.5.0
+  - 1.4.5
   - 1.5.1
 otp_release:
   - 18.3
@@ -18,6 +13,13 @@ otp_release:
   - 20.1
 addons:
   postgresql: "9.4"
+matrix:
+  exclude:
+    - elixir: 1.3.4
+      otp_release: 20.0
+    - elixir: 1.3.4
+      otp_release: 20.1
+
 before_script:
   - cp config/test.travis.exs config/test.exs
   - mix deps.get
