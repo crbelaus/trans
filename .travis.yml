@@ -6,12 +6,16 @@ elixir:
   - 1.4.0
   - 1.4.1
   - 1.4.2
+  - 1.5.0
+  - 1.5.1
 otp_release:
   - 18.3
   - 19.0
   - 19.1
   - 19.2
   - 19.3
+  - 20.0
+  - 20.1
 addons:
   postgresql: "9.4"
 before_script:
