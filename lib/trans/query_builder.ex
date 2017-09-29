@@ -82,26 +82,22 @@ if Code.ensure_loaded?(Ecto.Query) do
       with field <- field(translatable) do
         with {module_name, []} <- Module.eval_quoted(__CALLER__, module) do
           validate_field(module_name, field)
-          generate_query(schema(translatable), module_name, field, locale(locale))
+          generate_query(schema(translatable), module_name, field, locale)
         end
       end
     end
 
     defp generate_query(schema, module, nil, locale) do
       quote do
-        fragment("(?->?)", field(unquote(schema), unquote(module.__trans__(:container))), ^unquote(locale))
+        fragment("(?->?)", field(unquote(schema), unquote(module.__trans__(:container))), ^to_string(unquote(locale)))
       end
     end
 
     defp generate_query(schema, module, field, locale) do
       quote do
-        fragment("(?->?->>?)", field(unquote(schema), unquote(module.__trans__(:container))), ^unquote(locale), ^unquote(field))
+        fragment("(?->?->>?)", field(unquote(schema), unquote(module.__trans__(:container))), ^to_string(unquote(locale)), ^unquote(field))
       end
     end
-
-    defp locale(locale) when is_atom(locale) and not is_nil(locale), do: to_string(locale)
-    defp locale(locale) when is_binary(locale), do: locale
-    defp locale(_), do: raise ArgumentError, message: "The locale code must be either an atom or a string"
 
     defp schema({{:., _, [schema, _field]}, _metadata, _args}), do: schema
     defp schema(schema), do: schema
