@@ -18,7 +18,7 @@ defmodule Trans.Mixfile do
      name: "Trans",
      docs: [source_ref: "v#{@version}", main: "Trans",
             canonical: "https://hexdocs.pm/trans",
-            source_url: "https://github.com/belaustegui/trans"]]
+            source_url: "https://github.com/crbelaus/trans"]]
   end
 
   # Configuration for the OTP application
@@ -51,7 +51,7 @@ defmodule Trans.Mixfile do
     [
       licenses: ["MIT"],
       maintainers: ["Cristian Álvarez Belaustegui"],
-      links: %{"GitHub" => "https://github.com/belaustegui/trans"}
+      links: %{"GitHub" => "https://github.com/crbelaus/trans"}
     ]
   end
 
