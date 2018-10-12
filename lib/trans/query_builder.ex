@@ -80,7 +80,7 @@ if Code.ensure_loaded?(Ecto.Query) do
     """
     defmacro translated(module, translatable, locale) do
       with field <- field(translatable) do
-        module = Module.expand(module, __CALLER__)
+        module = Macro.expand(module, __CALLER__)
         validate_field(module, field)
         generate_query(schema(translatable), module, field, locale)
       end
