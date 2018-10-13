@@ -5,12 +5,12 @@
 
 `Trans` provides a way to manage and query translations embedded into schemas
 and removes the necessity of maintaing extra tables only for translation storage.
-
-`Trans` is inspired by the great [`hstore translate`](https://github.com/Leadformance/hstore_translate)
+It is inspired by the great [hstore translate](https://rubygems.org/gems/hstore_translate)
 gem for Ruby.
 
 `Trans` is published on [hex.pm](https://hex.pm/packages/trans) and the documentation
-is also [available online](https://hexdocs.pm/trans/).
+is also [available online](https://hexdocs.pm/trans/). Source code is available in this same
+repository under the Apache2 License.
 
 On April 17th, 2017, `Trans` was [featured in HackerNoon](https://hackernoon.com/introducing-trans2-407610887068)
 
