@@ -1,7 +1,7 @@
 defmodule Trans.Mixfile do
   use Mix.Project
 
-  @version "2.0.3"
+  @version "2.0.4"
 
   def project do
     [
@@ -45,16 +45,19 @@ defmodule Trans.Mixfile do
   defp deps do
     [
       {:poison, ">= 2.1.0"},
+      # Optional dependencies
       {:postgrex, "~> 0.11", optional: true},
       {:ecto, "~> 2.1", optional: true},
-      {:ex_doc, ">= 0.0.0", only: :dev},
+      # Doc dependencies
+      {:ex_doc, ">= 0.0.0", only: :docs},
+      # Test dependencies
       {:faker, "~> 0.7.0", only: :test}
     ]
   end
 
   defp package do
     [
-      licenses: ["MIT"],
+      licenses: ["Apache 2.0"],
       maintainers: ["Cristian Álvarez Belaustegui"],
       links: %{"GitHub" => "https://github.com/crbelaus/trans"}
     ]
