@@ -6,7 +6,7 @@ defmodule Trans.Mixfile do
   def project do
     [app: :trans,
     version: @version,
-     elixir: "~> 1.2",
+     elixir: "~> 1.4",
      description: "Embedded translations for Elixir schemas",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
