@@ -7,9 +7,9 @@ defmodule Trans.Comment do
   import Ecto.Changeset
 
   schema "comments" do
-    field :comment, :string
-    field :transcriptions, :map
-    belongs_to :article, Trans.Article
+    field(:comment, :string)
+    field(:transcriptions, :map)
+    belongs_to(:article, Trans.Article)
   end
 
   def changeset(comment, params \\ %{}) do

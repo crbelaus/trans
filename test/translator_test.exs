@@ -24,9 +24,10 @@ defmodule TranslatorTest do
   end
 
   test "raise error wen translating an untraslatable attribute" do
-    assert_raise RuntimeError, "'Trans.Article' module must declare ':fake_attr' as translatable", fn ->
-      Translator.translate(build(:article), :fake_attr, :es)
-    end
+    assert_raise RuntimeError,
+                 "'Trans.Article' module must declare ':fake_attr' as translatable",
+                 fn ->
+                   Translator.translate(build(:article), :fake_attr, :es)
+                 end
   end
-
 end

@@ -62,10 +62,11 @@ defmodule Trans.Translator do
   """
   @spec translate(struct, atom, atom) :: any
   def translate(%{__struct__: module} = struct, field, locale)
-  when is_atom(locale) and is_atom(field) do
+      when is_atom(locale) and is_atom(field) do
     unless Trans.translatable?(struct, field) do
       raise "'#{inspect(module)}' module must declare '#{inspect(field)}' as translatable"
     end
+
     # Return the translation or fall back to the default value
     case translated_field(struct, locale, field) do
       :error -> Map.fetch!(struct, field)
@@ -74,10 +75,10 @@ defmodule Trans.Translator do
   end
 
   defp translated_field(%{__struct__: module} = struct, locale, field) do
-    with {:ok, all_translations}        <- Map.fetch(struct, module.__trans__(:container)),
+    with {:ok, all_translations} <- Map.fetch(struct, module.__trans__(:container)),
          {:ok, translations_for_locale} <- Map.fetch(all_translations, to_string(locale)),
-         {:ok, translated_field}        <- Map.fetch(translations_for_locale, to_string(field)),
-      do: translated_field
+         {:ok, translated_field} <- Map.fetch(translations_for_locale, to_string(field)) do
+      translated_field
+    end
   end
-
 end

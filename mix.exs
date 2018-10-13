@@ -4,21 +4,26 @@ defmodule Trans.Mixfile do
   @version "2.0.3"
 
   def project do
-    [app: :trans,
-    version: @version,
-     elixir: "~> 1.4",
-     description: "Embedded translations for Elixir schemas",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     elixirc_paths: elixirc_paths(Mix.env),
-     app_list: app_list(Mix.env),
-     package: package(),
-     deps: deps(),
-     # Docs
-     name: "Trans",
-     docs: [source_ref: "v#{@version}", main: "Trans",
-            canonical: "https://hexdocs.pm/trans",
-            source_url: "https://github.com/crbelaus/trans"]]
+    [
+      app: :trans,
+      version: @version,
+      elixir: "~> 1.4",
+      description: "Embedded translations for Elixir schemas",
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
+      app_list: app_list(Mix.env()),
+      package: package(),
+      deps: deps(),
+      # Docs
+      name: "Trans",
+      docs: [
+        source_ref: "v#{@version}",
+        main: "Trans",
+        canonical: "https://hexdocs.pm/trans",
+        source_url: "https://github.com/crbelaus/trans"
+      ]
+    ]
   end
 
   # Configuration for the OTP application
@@ -43,7 +48,7 @@ defmodule Trans.Mixfile do
       {:postgrex, "~> 0.11", optional: true},
       {:ecto, "~> 2.1", optional: true},
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:faker, "~> 0.7.0", only: :test},
+      {:faker, "~> 0.7.0", only: :test}
     ]
   end
 

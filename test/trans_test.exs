@@ -30,16 +30,16 @@ defmodule TransTest do
   end
 
   test "compilation fails when translation container is not a valid field" do
-    invalid_module = quote do
-      defmodule TestArticle do
-        use Trans, translates: [:title, :body], container: :invalid_container
-        defstruct title: "", body: "", translations: %{}
+    invalid_module =
+      quote do
+        defmodule TestArticle do
+          use Trans, translates: [:title, :body], container: :invalid_container
+          defstruct title: "", body: "", translations: %{}
+        end
       end
-    end
 
     assert_raise ArgumentError,
-      "The field invalid_container used as the translation container is not defined in Elixir.TestArticle struct",
-      fn -> Code.eval_quoted(invalid_module) end
+                 "The field invalid_container used as the translation container is not defined in Elixir.TestArticle struct",
+                 fn -> Code.eval_quoted(invalid_module) end
   end
-
 end

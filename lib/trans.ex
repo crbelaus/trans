@@ -70,16 +70,16 @@ defmodule Trans do
 
   defmacro __using__(opts) do
     quote do
-      Module.put_attribute __MODULE__, :trans_fields, unquote(translatable_fields(opts))
-      Module.put_attribute __MODULE__, :trans_container, unquote(translation_container(opts))
+      Module.put_attribute(__MODULE__, :trans_fields, unquote(translatable_fields(opts)))
+      Module.put_attribute(__MODULE__, :trans_container, unquote(translation_container(opts)))
 
       @after_compile {Trans, :__validate_translatable_fields__}
       @after_compile {Trans, :__validate_translation_container__}
 
-      Module.eval_quoted __ENV__, [
+      Module.eval_quoted(__ENV__, [
         Trans.__fields__(@trans_fields),
         Trans.__container__(@trans_container)
-      ]
+      ])
     end
   end
 
@@ -113,13 +113,16 @@ defmodule Trans do
       iex> Trans.translatable?(%Article{}, :not_existing)
       false
   """
-  @spec translatable?(module | struct, String.t | atom) :: boolean
+  @spec translatable?(module | struct, String.t() | atom) :: boolean
   def translatable?(%{__struct__: module}, field), do: translatable?(module, field)
-  def translatable?(module_or_struct, field) when is_atom(module_or_struct) and is_binary(field) do
+
+  def translatable?(module_or_struct, field)
+      when is_atom(module_or_struct) and is_binary(field) do
     translatable?(module_or_struct, String.to_atom(field))
   end
+
   def translatable?(module_or_struct, field) when is_atom(module_or_struct) and is_atom(field) do
-    if  Keyword.has_key?(module_or_struct.__info__(:functions), :__trans__) do
+    if Keyword.has_key?(module_or_struct.__info__(:functions), :__trans__) do
       Enum.member?(module_or_struct.__trans__(:fields), field)
     else
       raise "#{module_or_struct} must use `Trans` in order to be translated"
@@ -146,40 +149,59 @@ defmodule Trans do
   def __validate_translatable_fields__(%{module: module}, _bytecode) do
     struct_fields =
       module.__struct__()
-      |> Map.keys
-      |> MapSet.new
+      |> Map.keys()
+      |> MapSet.new()
+
     translatable_fields =
       :fields
       |> module.__trans__
-      |> MapSet.new
+      |> MapSet.new()
+
     invalid_fields = MapSet.difference(translatable_fields, struct_fields)
+
     case MapSet.size(invalid_fields) do
-      0 -> nil
-      1 -> raise ArgumentError, message: "#{module} declares '#{MapSet.to_list(invalid_fields)}' as translatable but it is not defined in the module's struct"
-      _ -> raise ArgumentError, message: "#{module} declares '#{MapSet.to_list(invalid_fields)}' as translatable but it they not defined in the module's struct"
+      0 ->
+        nil
+
+      1 ->
+        raise ArgumentError,
+          message:
+            "#{module} declares '#{MapSet.to_list(invalid_fields)}' as translatable but it is not defined in the module's struct"
+
+      _ ->
+        raise ArgumentError,
+          message:
+            "#{module} declares '#{MapSet.to_list(invalid_fields)}' as translatable but it they not defined in the module's struct"
     end
   end
 
   @doc false
   def __validate_translation_container__(%{module: module}, _bytecode) do
     container = module.__trans__(:container)
+
     unless Enum.member?(Map.keys(module.__struct__()), container) do
-      raise ArgumentError, message: "The field #{container} used as the translation container is not defined in #{module} struct"
+      raise ArgumentError,
+        message:
+          "The field #{container} used as the translation container is not defined in #{module} struct"
     end
   end
 
   defp translatable_fields(opts) do
     case Keyword.fetch(opts, :translates) do
-      {:ok, fields} when is_list(fields) -> fields
-      _                                  -> raise ArgumentError, message: "Trans requires a 'translates' option that contains the list of translatable fields names"
+      {:ok, fields} when is_list(fields) ->
+        fields
+
+      _ ->
+        raise ArgumentError,
+          message:
+            "Trans requires a 'translates' option that contains the list of translatable fields names"
     end
   end
 
   defp translation_container(opts) do
     case Keyword.fetch(opts, :container) do
-      :error           -> :translations
+      :error -> :translations
       {:ok, container} -> container
     end
   end
-
 end

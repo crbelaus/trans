@@ -88,13 +88,22 @@ if Code.ensure_loaded?(Ecto.Query) do
 
     defp generate_query(schema, module, nil, locale) do
       quote do
-        fragment("(?->?)", field(unquote(schema), unquote(module.__trans__(:container))), ^to_string(unquote(locale)))
+        fragment(
+          "(?->?)",
+          field(unquote(schema), unquote(module.__trans__(:container))),
+          ^to_string(unquote(locale))
+        )
       end
     end
 
     defp generate_query(schema, module, field, locale) do
       quote do
-        fragment("(?->?->>?)", field(unquote(schema), unquote(module.__trans__(:container))), ^to_string(unquote(locale)), ^unquote(field))
+        fragment(
+          "(?->?->>?)",
+          field(unquote(schema), unquote(module.__trans__(:container))),
+          ^to_string(unquote(locale)),
+          ^unquote(field)
+        )
       end
     end
 
@@ -106,12 +115,16 @@ if Code.ensure_loaded?(Ecto.Query) do
 
     defp validate_field(module, field) do
       cond do
-        is_nil(field) -> nil
+        is_nil(field) ->
+          nil
+
         not Trans.translatable?(module, field) ->
-          raise ArgumentError, message: "'#{inspect(module)}' module must declare '#{field}' as translatable"
-        true -> nil
+          raise ArgumentError,
+            message: "'#{inspect(module)}' module must declare '#{field}' as translatable"
+
+        true ->
+          nil
       end
     end
-
   end
 end

@@ -33,9 +33,21 @@ jobs:
       - image: circleci/elixir:1.6
       - image: circleci/postgres:9.4
   "elixir-1.7":
-    <<: *shared
+    # Steps duplicated from the *shared node to check formatting
+    steps:
+    - checkout
+    # Set up the repository and fetch deps
+    - run: mix local.hex --force
+    - run: mix local.rebar --force
+    - run: cp config/test.ci.exs config/test.exs
+    - run: mix deps.get
+    # Check source code format
+    - run: mix format --check-formatted
+    # Create the test database and run the tests
+    - run: mix ecto.create
+    - run: mix test
     docker:
-      - image: circleci/elixir:1.6
+      - image: circleci/elixir:1.7
       - image: circleci/postgres:9.4
 
 workflows:
