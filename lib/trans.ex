@@ -76,10 +76,11 @@ defmodule Trans do
       @after_compile {Trans, :__validate_translatable_fields__}
       @after_compile {Trans, :__validate_translation_container__}
 
-      Module.eval_quoted(__ENV__, [
-        Trans.__fields__(@trans_fields),
-        Trans.__container__(@trans_container)
-      ])
+      @spec __trans__(:fields) :: list(atom)
+      def __trans__(:fields), do: @trans_fields
+
+      @spec __trans__(:container) :: atom
+      def __trans__(:container), do: @trans_container
     end
   end
 
@@ -126,22 +127,6 @@ defmodule Trans do
       Enum.member?(module_or_struct.__trans__(:fields), field)
     else
       raise "#{module_or_struct} must use `Trans` in order to be translated"
-    end
-  end
-
-  @doc false
-  def __fields__(fields) when is_list(fields) do
-    quote do
-      @spec __trans__(:fields) :: list(atom)
-      def __trans__(:fields), do: unquote(fields)
-    end
-  end
-
-  @doc false
-  def __container__(container) when is_atom(container) do
-    quote do
-      @spec __trans__(:container) :: atom
-      def __trans__(:container), do: unquote(container)
     end
   end
 
