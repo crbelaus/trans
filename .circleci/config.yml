@@ -2,25 +2,29 @@
 #
 # Check https://circleci.com/docs/2.0/language-elixir/ for more details
 version: 2
-jobs:
-  build:
-    docker:
-      # specify the version here
-      - image: circleci/elixir:1.4
 
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
+shared: &shared
+  working_directory: ~/repo
+  steps:
+    - checkout
+    # Set up the repository and fetch deps
+    - run: mix local.hex --force
+    - run: mix local.rebar --force
+    - run: cp config/test.travis.exs config/test.exs
+    - run: mix deps.get
+    # Create the test database and run the tests
+    - run: mix ecto.create
+    - run: mix test
+
+jobs:
+  "elixir-1.4":
+    <<: *shared
+    docker:
+      - image: circleci/elixir:1.4
       - image: circleci/postgres:9.4
 
-    working_directory: ~/repo
-    steps:
-      - checkout
-
-      # specify any bash command here prefixed with `run: `
-      - run: mix local.hex --force
-      - run: mix local.rebar --force
-      - run: cp config/test.travis.exs config/test.exs
-      - run: mix deps.get
-      - run: mix ecto.create
-      - run: mix test
+workflows:
+  version: 2
+  build:
+    jobs:
+      - "elixir-1.4"
