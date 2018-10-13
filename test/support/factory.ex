@@ -10,7 +10,7 @@ defmodule Trans.Factory do
   end
 
   def insert(factory, attributes \\ []) do
-    factory |> build(attributes) |> Repo.insert!
+    factory |> build(attributes) |> Repo.insert!()
   end
 
   def build(:article) do
@@ -21,13 +21,13 @@ defmodule Trans.Factory do
       translations: %{
         "es" => %{
           "title" => Faker.Lorem.sentence(5, " "),
-          "body"  => Faker.Lorem.sentence(10, " ")
+          "body" => Faker.Lorem.sentence(10, " ")
         },
         "fr" => %{
           "title" => Faker.Lorem.sentence(5, " "),
-          "body"  => Faker.Lorem.sentence(10, " ")
+          "body" => Faker.Lorem.sentence(10, " ")
         }
-      },
+      }
     }
   end
 
@@ -36,7 +36,7 @@ defmodule Trans.Factory do
       comment: Faker.Lorem.sentence(5, " "),
       transcriptions: %{
         "es" => %{"comment" => Faker.Lorem.sentence(5, " ")},
-        "fr" => %{"comment" => Faker.Lorem.sentence(5, " ")},
+        "fr" => %{"comment" => Faker.Lorem.sentence(5, " ")}
       }
     }
   end

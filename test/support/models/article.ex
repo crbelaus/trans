@@ -7,10 +7,10 @@ defmodule Trans.Article do
   import Ecto.Changeset
 
   schema "articles" do
-    field :title, :string
-    field :body, :string
-    field :translations, :map
-    has_many :comments, Trans.Comment
+    field(:title, :string)
+    field(:body, :string)
+    field(:translations, :map)
+    has_many(:comments, Trans.Comment)
   end
 
   def changeset(article, params \\ %{}) do
@@ -18,5 +18,4 @@ defmodule Trans.Article do
     |> cast(params, [:title, :body, :translations])
     |> validate_required([:title, :body])
   end
-
 end
