@@ -1,4 +1,4 @@
-if Code.ensure_loaded?(Ecto.Query) do
+if Code.ensure_loaded?(Ecto.Adapters.SQL) do
   defmodule Trans.QueryBuilder do
     @moduledoc """
     Adds conditions to `Ecto` queries on translated fields.
