@@ -50,7 +50,7 @@ defmodule Trans.Mixfile do
       {:ecto_sql, "~> 3.0", optional: true},
       {:postgrex, "~> 0.14", optional: true},
       # Doc dependencies
-      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:ex_doc, ">= 0.0.0", only: :docs},
       # Test dependencies
       {:faker, "~> 0.7.0", only: :test}
     ]
