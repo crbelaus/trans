@@ -1,7 +1,7 @@
 defmodule Trans.Mixfile do
   use Mix.Project
 
-  @version "2.0.4"
+  @version "2.1.0"
 
   def project do
     [
@@ -44,10 +44,11 @@ defmodule Trans.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:poison, ">= 2.1.0"},
+      {:jason, "~> 1.1"},
+      {:ecto, "~> 3.0"},
       # Optional dependencies
-      {:postgrex, "~> 0.11", optional: true},
-      {:ecto, "~> 2.1", optional: true},
+      {:ecto_sql, "~> 3.0", optional: true},
+      {:postgrex, "~> 0.14", optional: true},
       # Doc dependencies
       {:ex_doc, ">= 0.0.0", only: :docs},
       # Test dependencies
