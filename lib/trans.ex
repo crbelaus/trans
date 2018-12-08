@@ -15,7 +15,7 @@ defmodule Trans do
   and automatically fallbacks to the default value when the translation does
   not exist in the required locale.
   - `Trans.QueryBuilder` - adds conditions to `Ecto.Query` for filtering values
-  of translated fields. This module will be available only if `Ecto` is available.
+  of translated fields. This module will be available only if `Ecto.SQL` is available.
 
   `Trans` shines when paired with an `Ecto.Schema`. It allows you to keep the
   translations into a field of the schema and avoids requiring extra tables for
