@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# 2.1.0 - 2018-12-08
+- Update `Ecto` dependency to 3.0 version
+
 # 2.0.4 - 2018-10-14
 - Remove `Module.eval_quoted` calls.
 - Migrate to CircleCI
