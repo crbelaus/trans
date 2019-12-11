@@ -189,10 +189,23 @@ iex> article = %Article{
 ```
 
 Once we have already loaded a struct, we may use the `Trans.Translator.translate/3`
-function to easily access a translation of a certain field.
+function to easily access a translation of a certain field. Locale can be passed as
+an atom or a string
 
 ```elixir
 iex> Trans.Translator.translate(article, :title, :es)
+"Cómo escribir un corrector ortográfico"
+```
+
+```elixir
+iex> Trans.Translator.translate(article, :title, "es")
+"Cómo escribir un corrector ortográfico"
+```
+
+or
+
+```elixir
+iex> Trans.Translator.translate(article, :title, Gettext.get_locale())
 "Cómo escribir un corrector ortográfico"
 ```
 

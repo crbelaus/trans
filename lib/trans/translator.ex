@@ -60,9 +60,9 @@ defmodule Trans.Translator do
       ** (RuntimeError) 'fake_attr' is not translatable. Translatable fields are [:title, :body]
 
   """
-  @spec translate(struct, atom, atom) :: any
+  @spec translate(struct, atom, String.t() | atom) :: any
   def translate(%{__struct__: module} = struct, field, locale)
-      when is_atom(locale) and is_atom(field) do
+      when (is_binary(locale) or is_atom(locale)) and is_atom(field) do
     unless Trans.translatable?(struct, field) do
       raise "'#{inspect(module)}' module must declare '#{inspect(field)}' as translatable"
     end

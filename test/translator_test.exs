@@ -5,9 +5,15 @@ import Trans.Factory
 defmodule TranslatorTest do
   use ExUnit.Case
 
-  test "retrieve translation for existing attribute" do
+  test "retrieve translation for existing attribute using locale as atom" do
     article = build(:article)
     fr_body = Translator.translate(article, :body, :fr)
+    assert fr_body == article.translations["fr"]["body"]
+  end
+
+  test "retrieve translation for existing attribute using locale as string" do
+    article = build(:article)
+    fr_body = Translator.translate(article, :body, "fr")
     assert fr_body == article.translations["fr"]["body"]
   end
 
