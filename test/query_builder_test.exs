@@ -18,7 +18,8 @@ defmodule QueryBuilderTest do
   test "should find only one article translated to ES" do
     count =
       Repo.one(
-        from(a in Article,
+        from(
+          a in Article,
           where: not is_nil(translated(Article, a, :es)),
           select: count(a.id)
         )
@@ -30,7 +31,8 @@ defmodule QueryBuilderTest do
   test "should not find any article translated to DE" do
     count =
       Repo.one(
-        from(a in Article,
+        from(
+          a in Article,
           where: not is_nil(translated(Article, a, :de)),
           select: count(a.id)
         )
@@ -44,7 +46,8 @@ defmodule QueryBuilderTest do
     with comment <- hd(article.comments) do
       matches =
         Repo.all(
-          from(c in Comment,
+          from(
+            c in Comment,
             where: translated(Comment, c.comment, :fr) == ^comment.transcriptions["fr"]["comment"]
           )
         )
@@ -58,7 +61,8 @@ defmodule QueryBuilderTest do
        %{translated_article: article} do
     matches =
       Repo.all(
-        from(a in Article,
+        from(
+          a in Article,
           where: translated(Article, a.title, :fr) == ^article.translations["fr"]["title"]
         )
       )
@@ -70,7 +74,8 @@ defmodule QueryBuilderTest do
   test "should not find an article by a non existant translation" do
     count =
       Repo.one(
-        from(a in Article,
+        from(
+          a in Article,
           select: count(a.id),
           where: translated(Article, a.title, :es) == "FAKE TITLE"
         )
@@ -90,7 +95,8 @@ defmodule QueryBuilderTest do
 
     matches =
       Repo.all(
-        from(a in Article,
+        from(
+          a in Article,
           where: ilike(translated(Article, a.body, :es), ^first_words)
         )
       )
@@ -111,7 +117,8 @@ defmodule QueryBuilderTest do
 
     count =
       Repo.one(
-        from(a in Article,
+        from(
+          a in Article,
           select: count(a.id),
           where: like(translated(Article, a.body, :fr), ^first_words)
         )
@@ -132,7 +139,8 @@ defmodule QueryBuilderTest do
 
     matches =
       Repo.all(
-        from(a in Article,
+        from(
+          a in Article,
           where: ilike(translated(Article, a.body, :fr), ^first_words)
         )
       )
@@ -146,7 +154,8 @@ defmodule QueryBuilderTest do
     with comment <- hd(article.comments).transcriptions["es"]["comment"] do
       matches =
         Repo.all(
-          from(a in Article,
+          from(
+            a in Article,
             join: c in Comment,
             on: a.id == c.article_id,
             where: translated(Comment, c.comment, :es) == ^comment
@@ -164,7 +173,8 @@ defmodule QueryBuilderTest do
          comment <- hd(article.comments).transcriptions["fr"]["comment"] do
       matches =
         Repo.all(
-          from(a in Article,
+          from(
+            a in Article,
             join: c in Comment,
             on: a.id == c.article_id,
             where: translated(Article, a.title, :fr) == ^title,
@@ -188,7 +198,8 @@ defmodule QueryBuilderTest do
           import Ecto.Query, only: [from: 2]
 
           def invalid_query do
-            from(a in Article,
+            from(
+              a in Article,
               where: not is_nil(translated(Article, a.translations, :es))
             )
           end
@@ -205,7 +216,8 @@ defmodule QueryBuilderTest do
 
     articles =
       Repo.all(
-        from(a in Article,
+        from(
+          a in Article,
           order_by: translated(Article, a.title, locale)
         )
       )
