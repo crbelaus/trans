@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# 2.2.0 - 2020-02-01
+- Require Elixir 1.6 or newer
+- Enable locale to be passed as a string
+- Update ExDoc dependency
+- Remove Faker dependency
+
 # 2.1.0 - 2018-12-08
 - Update `Ecto` dependency to 3.0 version
 

@@ -1,7 +1,7 @@
 defmodule Trans.Mixfile do
   use Mix.Project
 
-  @version "2.1.0"
+  @version "2.2.0"
 
   def project do
     [
