@@ -15,17 +15,17 @@ defmodule Trans.Factory do
 
   def build(:article) do
     %Article{
-      title: Faker.Lorem.sentence(5, " "),
-      body: Faker.Lorem.sentence(10, " "),
+      title: unique_string("Article title in English"),
+      body: unique_string("Article body in English"),
       comments: [build(:comment), build(:comment)],
       translations: %{
         "es" => %{
-          "title" => Faker.Lorem.sentence(5, " "),
-          "body" => Faker.Lorem.sentence(10, " ")
+          "title" => unique_string("Article title in Spanish"),
+          "body" => unique_string("Article body in Spanish")
         },
         "fr" => %{
-          "title" => Faker.Lorem.sentence(5, " "),
-          "body" => Faker.Lorem.sentence(10, " ")
+          "title" => unique_string("Article title in French"),
+          "body" => unique_string("Article body in French")
         }
       }
     }
@@ -33,11 +33,22 @@ defmodule Trans.Factory do
 
   def build(:comment) do
     %Comment{
-      comment: Faker.Lorem.sentence(5, " "),
+      comment: unique_string("Comment in English"),
       transcriptions: %{
-        "es" => %{"comment" => Faker.Lorem.sentence(5, " ")},
-        "fr" => %{"comment" => Faker.Lorem.sentence(5, " ")}
+        "es" => %{"comment" => unique_string("Comment in Spanish")},
+        "fr" => %{"comment" => unique_string("Comment in French")}
       }
     }
+  end
+
+  # Adds a random suffix to the given string to make it unique.
+  defp unique_string(string) do
+    suffix =
+      string
+      |> String.length()
+      |> :crypto.strong_rand_bytes()
+      |> Base.url_encode64()
+
+    Enum.join([string, suffix], " - ")
   end
 end
