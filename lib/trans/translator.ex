@@ -100,11 +100,13 @@ defmodule Trans.Translator do
   end
 
   # check if struct (means it's using ecto embeds); if so, make sure 'field' is also atom
-  defp get_translated_field(%{__struct__: _} = translations_for_locale, field) when is_binary(field) do
+  defp get_translated_field(%{__struct__: _} = translations_for_locale, field)
+       when is_binary(field) do
     get_translated_field(translations_for_locale, String.to_existing_atom(field))
   end
 
-  defp get_translated_field(%{__struct__: _} = translations_for_locale, field) when is_atom(field) do
+  defp get_translated_field(%{__struct__: _} = translations_for_locale, field)
+       when is_atom(field) do
     Map.fetch(translations_for_locale, field)
   end
 
