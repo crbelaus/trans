@@ -99,6 +99,9 @@ defmodule Trans.Translator do
     Map.fetch(all_translations, to_string(locale))
   end
 
+  # there are no translations for this locale embed
+  defp get_translated_field(nil, _field), do: nil
+
   # check if struct (means it's using ecto embeds); if so, make sure 'field' is also atom
   defp get_translated_field(%{__struct__: _} = translations_for_locale, field)
        when is_binary(field) do
