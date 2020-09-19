@@ -4,7 +4,7 @@
 [![Hex.pm](https://img.shields.io/hexpm/dt/trans.svg?maxAge=2592000&style=flat-square)](https://hex.pm/packages/trans)
 
 `Trans` provides a way to manage and query translations embedded into schemas
-and removes the necessity of maintaing extra tables only for translation storage.
+and removes the necessity of maintaining extra tables only for translation storage.
 It is inspired by the great [hstore translate](https://rubygems.org/gems/hstore_translate)
 gem for Ruby.
 
