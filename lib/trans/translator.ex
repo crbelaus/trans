@@ -54,10 +54,16 @@ defmodule Trans.Translator do
       iex> Trans.Translator.translate(article, :title, :de)
       "How to Write a Spelling Corrector"
 
+  But if translate! is used and the requested locale is not available, we will receive an error:
+
+      iex> Trans.Translator.translate!(article, :title, :de)
+      ** (RuntimeError) translation doesn't exist for field 'fake_attr' in language 'es'
+
   If we request a translation for an invalid field, we will receive an error:
 
-      iex> Trans.Translator.Translate(article, :fake_attr, :es)
+      iex> Trans.Translator.translate(article, :fake_attr, :es)
       ** (RuntimeError) 'fake_attr' is not translatable. Translatable fields are [:title, :body]
+
 
   """
   @spec translate(struct, atom, String.t() | atom) :: any
@@ -71,6 +77,23 @@ defmodule Trans.Translator do
     case translated_field(struct, locale, field) do
       :error -> Map.fetch!(struct, field)
       translation -> translation
+    end
+  end
+
+  @spec translate!(struct, atom, String.t() | atom) :: any
+  def translate!(%{__struct__: module} = struct, field, locale)
+      when (is_binary(locale) or is_atom(locale)) and is_atom(field) do
+    unless Trans.translatable?(struct, field) do
+      raise "'#{inspect(module)}' module must declare '#{inspect(field)}' as translatable"
+    end
+
+    # Return the translation or fall back to the default value
+    case translated_field(struct, locale, field) do
+      :error ->
+        raise "translation doesn't exist for field '#{inspect(field)}' in language '#{locale}'"
+
+      translation ->
+        translation
     end
   end
 
