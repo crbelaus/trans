@@ -57,7 +57,7 @@ defmodule Trans.Translator do
   But if translate! is used and the requested locale is not available, we will receive an error:
 
       iex> Trans.Translator.translate!(article, :title, :de)
-      ** (RuntimeError) translation doesn't exist for field 'fake_attr' in language 'es'
+      ** (RuntimeError) translation doesn't exist for field ':title' in language 'de'
 
   If we request a translation for an invalid field, we will receive an error:
 
