@@ -122,8 +122,8 @@ defmodule Trans.Translator do
   def translate(struct, _locale), do: struct
 
   defp translate_fields(%{__struct__: module} = struct, locale) do
-    module.__trans__(:fields)
-    |> Enum.reduce(struct, fn field, struct ->
+    fields = module.__trans__(:fields)
+    Enum.reduce(fields, struct, fn field, struct ->
       case translated_field(struct, locale, field) do
         :error -> struct
         translation -> Map.put(struct, field, translation)
