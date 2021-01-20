@@ -36,4 +36,17 @@ defmodule TranslatorTest do
                    Translator.translate(build(:article), :fake_attr, :es)
                  end
   end
+
+  test "translates the whole struct at once" do
+    article = build(:article)
+    fr_article = Translator.translate(article, :fr)
+    assert fr_article.title == article.translations["fr"]["title"]
+    assert fr_article.body == article.translations["fr"]["body"]
+  end
+
+  test "translates the nested structs" do
+    %{comments: [comment | _]} = article = build(:article)
+    %{comments: [fr_comment | _]} = Translator.translate(article, :fr)
+    assert fr_comment.comment == comment.transcriptions["fr"]["comment"]
+  end
 end
