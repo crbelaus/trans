@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 # Unreleased
+- Require Elixir 1.7 or newer
 - Migrate from CircleCI to GitHub Actions
 
 # 2.2.0 - 2020-02-01
