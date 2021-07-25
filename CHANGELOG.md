@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+# Unreleased
+- Migrate from CircleCI to GitHub Actions
+
 # 2.2.0 - 2020-02-01
 - Require Elixir 1.6 or newer
 - Enable locale to be passed as a string

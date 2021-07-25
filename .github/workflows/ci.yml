@@ -1,0 +1,53 @@
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - elixir: 1.6
+            otp: 20
+          - elixir: 1.12
+            otp: 24
+
+    env:
+      MIX_ENV: test
+
+    services:
+      postgres:
+        image: postgres:13
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: trans_test
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - name: Prepare test environment
+        run: |
+          cp config/test.ci.exs config/test.exs
+      - name: Fetch and compile dependencies
+        run: |
+          mix deps.get
+          mix deps.compile
+      - name: Compile application
+        run: |
+          mix compile --warnings-as-erros
+      - name: Check format
+        run: |
+          mix format --check-formatted
+      - name: Run tests
+        run: |
+          mix test

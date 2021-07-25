@@ -2,5 +2,5 @@ use Mix.Config
 
 config :trans, Trans.TestRepo,
   username: "postgres",
-  password: "",
+  password: "postgres",
   database: "trans_test"

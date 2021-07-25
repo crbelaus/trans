@@ -1,6 +1,7 @@
 # Trans
 
-[![CircleCI](https://circleci.com/gh/crbelaus/trans/tree/master.svg?style=svg)](https://circleci.com/gh/crbelaus/trans/tree/master)
+[![Tests](https://github.com/crbelaus/trans/actions/workflows/ci.yml/badge.svg)](https://github.com/crbelaus/trans/actions/workflows/ci.yml/badge.svg)
+
 [![Hex.pm](https://img.shields.io/hexpm/dt/trans.svg?maxAge=2592000&style=flat-square)](https://hex.pm/packages/trans)
 
 `Trans` provides a way to manage and query translations embedded into schemas
