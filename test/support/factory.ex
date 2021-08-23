@@ -43,12 +43,6 @@ defmodule Trans.Factory do
 
   # Adds a random suffix to the given string to make it unique.
   defp unique_string(string) do
-    suffix =
-      string
-      |> String.length()
-      |> :crypto.strong_rand_bytes()
-      |> Base.url_encode64()
-
-    Enum.join([string, suffix], " - ")
+    Enum.join([string, System.unique_integer()], " - ")
   end
 end
