@@ -17,11 +17,28 @@ defmodule TranslatorTest do
     assert fr_body == article.translations["fr"]["body"]
   end
 
+  test "retrieve translation using translate! for existing attribute using locale as string" do
+    article = build(:article)
+    fr_body = Translator.translate!(article, :body, "fr")
+    assert fr_body == article.translations["fr"]["body"]
+  end
+
   test "fallback to default value when no translation available" do
     article = build(:article)
     # Since we don't have a "de" translation, it will return the default value'
     body = Translator.translate(article, :body, :de)
     assert body == article.body
+  end
+
+  test "raise error when no translation available" do
+    article = build(:article)
+    # Since we don't have a "de" translation, translate! will raise an error'
+
+    assert_raise RuntimeError,
+                 "translation doesn't exist for field ':body' in language 'de'",
+                 fn ->
+                   Translator.translate!(article, :body, :de)
+                 end
   end
 
   test "use custom translation container if required" do

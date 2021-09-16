@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Require Elixir 1.7 or newer
 - Migrate from CircleCI to GitHub Actions
 - Allow translating entire structs
+- Add translate!/3 function to raise if a translation does not exist
 
 # 2.2.0 - 2020-02-01
 - Require Elixir 1.6 or newer
