@@ -76,6 +76,7 @@ defmodule Trans.Translator do
     # Return the translation or fall back to the default value
     case translated_field(struct, locale, field) do
       :error -> Map.fetch!(struct, field)
+      nil -> Map.fetch!(struct, field)
       translation -> translation
     end
   end
@@ -99,8 +100,8 @@ defmodule Trans.Translator do
 
   defp translated_field(%{__struct__: module} = struct, locale, field) do
     with {:ok, all_translations} <- Map.fetch(struct, module.__trans__(:container)),
-         {:ok, translations_for_locale} <- Map.fetch(all_translations, to_string(locale)),
-         {:ok, translated_field} <- Map.fetch(translations_for_locale, to_string(field)) do
+         {:ok, translations_for_locale} <- get_translations_for_locale(all_translations, locale),
+         {:ok, translated_field} <- get_translated_field(translations_for_locale, field) do
       translated_field
     end
   end
@@ -174,5 +175,40 @@ defmodule Trans.Translator do
           item
       end)
     end)
+  end
+
+  # check if struct (means it's using ecto embeds); if so, make sure 'locale' is also atom
+  defp get_translations_for_locale(%{__struct__: _} = all_translations, locale)
+       when is_binary(locale) do
+    get_translations_for_locale(all_translations, String.to_existing_atom(locale))
+  end
+
+  defp get_translations_for_locale(%{__struct__: _} = all_translations, locale)
+       when is_atom(locale) do
+    Map.fetch(all_translations, locale)
+  end
+
+  # fallback to default behaviour
+  defp get_translations_for_locale(all_translations, locale) do
+    Map.fetch(all_translations, to_string(locale))
+  end
+
+  # there are no translations for this locale embed
+  defp get_translated_field(nil, _field), do: nil
+
+  # check if struct (means it's using ecto embeds); if so, make sure 'field' is also atom
+  defp get_translated_field(%{__struct__: _} = translations_for_locale, field)
+       when is_binary(field) do
+    get_translated_field(translations_for_locale, String.to_existing_atom(field))
+  end
+
+  defp get_translated_field(%{__struct__: _} = translations_for_locale, field)
+       when is_atom(field) do
+    Map.fetch(translations_for_locale, field)
+  end
+
+  # fallback to default behaviour
+  defp get_translated_field(translations_for_locale, field) do
+    Map.fetch(translations_for_locale, to_string(field))
   end
 end
