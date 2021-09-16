@@ -81,4 +81,75 @@ defmodule Trans.Translator do
       translated_field
     end
   end
+
+  @doc """
+  Translates the whole struct with all translatable values and translatable associations to the given locale
+
+  ## Usage example
+  Similar to `translate/3` but returns the whole struct
+
+  We can get the Spanish version like this:
+
+      iex> Trans.Translator.translate(article, :es)
+      ...> %Article{
+      ...>   title: "Cómo escribir un corrector ortográfico",
+      ...>   body: "Un artículo maravilloso de Peter Norvig",
+      ...>   translations: %{
+      ...>     "es" => %{
+      ...>       title: "Cómo escribir un corrector ortográfico",
+      ...>       body: "Un artículo maravilloso de Peter Norvig"
+      ...>     },
+      ...>     "fr" => %{
+      ...>        title: "Comment écrire un correcteur orthographique",
+      ...>        body: "Un merveilleux article de Peter Norvig"
+      ...>      }
+      ...>   }
+      ...> }
+
+  """
+  @spec translate(struct, String.t() | atom) :: struct
+  def translate(%{__struct__: module} = struct, locale)
+      when is_binary(locale) or is_atom(locale) do
+    if Keyword.has_key?(module.__info__(:functions), :__trans__) do
+      struct
+      |> translate_fields(locale)
+      |> translate_assocs(locale)
+    else
+      struct
+    end
+  end
+
+  def translate(struct, _locale), do: struct
+
+  defp translate_fields(%{__struct__: module} = struct, locale) do
+    fields = module.__trans__(:fields)
+
+    Enum.reduce(fields, struct, fn field, struct ->
+      case translated_field(struct, locale, field) do
+        :error -> struct
+        translation -> Map.put(struct, field, translation)
+      end
+    end)
+  end
+
+  defp translate_assocs(%{__struct__: module} = struct, locale) do
+    associations = module.__schema__(:associations)
+    embeds = module.__schema__(:embeds)
+
+    Enum.reduce(associations ++ embeds, struct, fn assoc_name, struct ->
+      Map.update(struct, assoc_name, nil, fn
+        %Ecto.Association.NotLoaded{} = item ->
+          item
+
+        items when is_list(items) ->
+          Enum.map(items, &translate(&1, locale))
+
+        %{} = item ->
+          translate(item, locale)
+
+        item ->
+          item
+      end)
+    end)
+  end
 end
