@@ -1,4 +1,14 @@
 defmodule Trans do
+  @typedoc """
+  A translatable struct that uses `Trans`
+  """
+  @type translatable() :: struct()
+
+  @typedoc """
+  A locale that may be a string or an atom
+  """
+  @type locale() :: String.t() | atom()
+
   @moduledoc ~S"""
   `Trans` provides a way to manage and query translations embedded into schemas
   and removes the necessity of maintaining extra tables only for translation
