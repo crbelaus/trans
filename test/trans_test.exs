@@ -1,10 +1,8 @@
-alias Trans.Article
-alias Trans.Comment
-
-import Trans.Factory
-
 defmodule TransTest do
-  use ExUnit.Case
+  use Trans.TestCase
+
+  alias Trans.{Article, Comment}
+
   doctest Trans
 
   test "checks whether a field is translatable or not given a module" do

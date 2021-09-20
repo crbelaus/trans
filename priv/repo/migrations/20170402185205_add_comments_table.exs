@@ -1,4 +1,4 @@
-defmodule Trans.TestRepo.Migrations.AddCommentsTable do
+defmodule Trans.Repo.Migrations.AddCommentsTable do
   use Ecto.Migration
 
   def change do

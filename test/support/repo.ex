@@ -1,4 +1,4 @@
-defmodule Trans.TestRepo do
+defmodule Trans.Repo do
   @moduledoc false
 
   use Ecto.Repo,

@@ -11,6 +11,7 @@ defmodule Trans.Mixfile do
       description: "Embedded translations for Elixir schemas",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
+      aliases: aliases(),
       elixirc_paths: elixirc_paths(Mix.env()),
       app_list: app_list(Mix.env()),
       package: package(),
@@ -72,4 +73,14 @@ defmodule Trans.Mixfile do
   def elixirc_paths(:test), do: elixirc_paths() ++ ["test/support"]
   def elixirc_paths(_), do: elixirc_paths()
   def elixirc_paths, do: ["lib"]
+
+  defp aliases do
+    [
+      test: [
+        "ecto.create --quiet",
+        "ecto.migrate --quiet",
+        "test"
+      ]
+    ]
+  end
 end

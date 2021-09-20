@@ -1,6 +1,6 @@
 alias Trans.Article
 alias Trans.Comment
-alias Trans.TestRepo, as: Repo
+alias Trans.Repo, as: Repo
 
 defmodule Trans.Factory do
   @moduledoc false
@@ -18,14 +18,14 @@ defmodule Trans.Factory do
       title: unique_string("Article title in English"),
       body: unique_string("Article body in English"),
       comments: [build(:comment), build(:comment)],
-      translations: %{
-        "es" => %{
-          "title" => unique_string("Article title in Spanish"),
-          "body" => unique_string("Article body in Spanish")
+      translations: %Article.Translations{
+        es: %Article.Translations.Fields{
+          title: unique_string("Article title in Spanish"),
+          body: unique_string("Article body in Spanish")
         },
-        "fr" => %{
-          "title" => unique_string("Article title in French"),
-          "body" => unique_string("Article body in French")
+        fr: %Article.Translations.Fields{
+          title: unique_string("Article title in French"),
+          body: unique_string("Article body in French")
         }
       }
     }

@@ -1,26 +1,25 @@
-alias Trans.Article
-alias Trans.Comment
-alias Trans.TestRepo, as: Repo
+defmodule Trans.QueryBuilderTest do
+  use Trans.TestCase
 
-import Trans.Factory
-import Trans.QueryBuilder
-import Ecto.Query, only: [from: 2]
+  import Trans.QueryBuilder
 
-defmodule QueryBuilderTest do
-  use ExUnit.Case
+  alias Trans.{Article, Comment}
 
-  setup_all do
-    {:ok,
-     translated_article: insert(:article),
-     untranslated_article: insert(:article, translations: %{})}
+  setup do
+    [
+      translated_article: insert(:article),
+      untranslated_article: insert(:article, translations: %{})
+    ]
   end
 
   test "should find only one article translated to ES" do
+    # Articles use nested structs for translations, this means that the translation container
+    # allways has the locale keys, but they are "null" if empty.
     count =
       Repo.one(
         from(
           a in Article,
-          where: not is_nil(translated(Article, a, :es)),
+          where: translated(Article, a, :es) != "null",
           select: count(a.id)
         )
       )
@@ -63,7 +62,7 @@ defmodule QueryBuilderTest do
       Repo.all(
         from(
           a in Article,
-          where: translated(Article, a.title, :fr) == ^article.translations["fr"]["title"]
+          where: translated(Article, a.title, :fr) == ^article.translations.fr.title
         )
       )
 
@@ -87,7 +86,7 @@ defmodule QueryBuilderTest do
   test "should find an article by partial and case sensitive translation",
        %{translated_article: article} do
     first_words =
-      article.translations["es"]["body"]
+      article.translations.es.body
       |> String.split()
       |> Enum.take(3)
       |> Enum.join(" ")
@@ -108,7 +107,7 @@ defmodule QueryBuilderTest do
   test "should not find an article by incorrect case using case sensitive translation",
        %{translated_article: article} do
     first_words =
-      article.translations["fr"]["body"]
+      article.translations.fr.body
       |> String.split()
       |> Enum.take(3)
       |> Enum.join(" ")
@@ -130,7 +129,7 @@ defmodule QueryBuilderTest do
   test "should find an article by incorrect case using case insensitive translation",
        %{translated_article: article} do
     first_words =
-      article.translations["fr"]["body"]
+      article.translations.fr.body
       |> String.split()
       |> Enum.take(3)
       |> Enum.join(" ")
@@ -169,7 +168,7 @@ defmodule QueryBuilderTest do
 
   test "should find an article looking for a translation and one of its comments translations",
        %{translated_article: article} do
-    with title <- article.translations["fr"]["title"],
+    with title <- article.translations.fr.title,
          comment <- hd(article.comments).transcriptions["fr"]["comment"] do
       matches =
         Repo.all(

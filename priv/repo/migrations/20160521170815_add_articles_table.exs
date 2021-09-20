@@ -1,4 +1,4 @@
-defmodule Trans.TestRepo.Migrations.AddArticlesTable do
+defmodule Trans.Repo.Migrations.AddArticlesTable do
   use Ecto.Migration
 
   def change do
