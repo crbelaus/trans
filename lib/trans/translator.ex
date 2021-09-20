@@ -1,72 +1,63 @@
 defmodule Trans.Translator do
   @moduledoc """
-  Provides functions to easily access translated values from schemas and fallback
-  to a default locale when the translation does not exist in the required one.
+  Provides easy access to struct translations.
 
-  The functions provided by this module require structs declared in modules
-  using `Trans`.
+  Although translations are stored in regular fields of an struct and can be accessed directly, **it
+  is recommended to access translations using the functions provided by this module** instead. This
+  functions present additional behaviours such as:
 
-  All examples in this module assume the following schema:
+  * Checking that the given struct uses `Trans`
+  * Automatically inferring the [translation container](Trans.html#module-translation-container)
+    when needed.
+  * Falling back to the default value or raising if a translation does not exist.
+  * Translating entire structs.
 
-      defmodule Article do
-        use Ecto.Schema
-        use Trans, translates: [:title, :body]
+  All examples in this module assume the following article, based on the schema defined in
+  [Structured translations](Trans.html#module-structured-translations)
 
-        schema "articles" do
-          field :title, :string
-          field :body, :string
-          field :translations, :map
-        end
-      end
-
-  We may have an `Article` like this (Our main locale is `:en`, but we have
-  translations in `:es` and `:fr`):
-
-      iex> article = %Article{
-      ...>   title: "How to Write a Spelling Corrector",
-      ...>   body: "A wonderful article by Peter Norvig",
-      ...>   translations: %{
-      ...>     "es" => %{
-      ...>       title: "Cómo escribir un corrector ortográfico",
-      ...>       body: "Un artículo maravilloso de Peter Norvig"
-      ...>     },
-      ...>     "fr" => %{
-      ...>        title: "Comment écrire un correcteur orthographique",
-      ...>        body: "Un merveilleux article de Peter Norvig"
-      ...>      }
-      ...>   }
-      ...> }
+      article = %MyApp.Article{
+        title: "How to Write a Spelling Corrector",
+        body: "A wonderful article by Peter Norvig",
+        translations: %MyApp.Article.Translations{
+          es: %MyApp.Article.Translation{
+            title: "Cómo escribir un corrector ortográfico",
+            body: "Un artículo maravilloso de Peter Norvig"
+          },
+          fr: %MyApp.Article.Translation{
+             title: "Comment écrire un correcteur orthographique",
+             body: "Un merveilleux article de Peter Norvig"
+           }
+        }
+      }
   """
 
   defguardp is_locale(locale) when is_binary(locale) or is_atom(locale)
 
   @doc """
-  Translate a whole translatable struct.
+  Translate a whole struct into the given locale.
 
   Translates the whole struct with all translatable values and translatable associations into the
   given locale. Similar to `translate/3` but returns the whole struct.
 
-  ## Usage example
+  ## Examples
 
-  We can get the Spanish version like this:
+  Assuming the example article in this module, we can translate the entire struct into Spanish:
 
-      iex> Trans.Translator.translate(article, :es)
-      ...> %Article{
-      ...>   title: "Cómo escribir un corrector ortográfico",
-      ...>   body: "Un artículo maravilloso de Peter Norvig",
-      ...>   translations: %{
-      ...>     "es" => %{
-      ...>       title: "Cómo escribir un corrector ortográfico",
-      ...>       body: "Un artículo maravilloso de Peter Norvig"
-      ...>     },
-      ...>     "fr" => %{
-      ...>        title: "Comment écrire un correcteur orthographique",
-      ...>        body: "Un merveilleux article de Peter Norvig"
-      ...>      }
-      ...>   }
-      ...> }
+      # Translate the entire article into Spanish
+      article_es = Trans.Translator.translate(article, :es)
 
+      article_es.title #=> "Cómo escribir un corrector ortográfico"
+      article_es.body #=> "Un artículo maravilloso de Peter Norvig"
+
+  Just like `translate/3`, falls back to the default locale if the translation does not exist:
+
+      # The Deutsch translation does not exist
+      article_de = Trans.Translator.translate(article, :de)
+
+      article_de.title #=> "How to Write a Spelling Corrector"
+      article_de.body #=> "A wonderful article by Peter Norvig"
   """
+  @doc since: "2.3.0"
   @spec translate(Trans.translatable(), Trans.locale()) :: Trans.translatable()
   def translate(%{__struct__: module} = translatable, locale) when is_locale(locale) do
     if Keyword.has_key?(module.__info__(:functions), :__trans__) do
@@ -79,26 +70,25 @@ defmodule Trans.Translator do
   end
 
   @doc """
-  Translate a field into the given locale.
+  Translate a single field into the given locale.
 
-  Gets a translated field into the given locale or falls back to the default value if there is no
+  Translates the field into the given locale or falls back to the default value if there is no
   translation available.
 
-  ## Usage example
+  ## Examples
 
-  We can get the Spanish title:
+  Assuming the example article in this module:
 
-      iex> Trans.Translator.translate(article, :title, :es)
+      # We can get the Spanish title:
+      Trans.Translator.translate(article, :title, :es)
       "Cómo escribir un corrector ortográfico"
 
-  If the requested locale is not available, the default value will be returned:
-
-      iex> Trans.Translator.translate(article, :title, :de)
+      # If the requested locale is not available, the default value will be returned:
+      Trans.Translator.translate(article, :title, :de)
       "How to Write a Spelling Corrector"
 
-  If we request a translation for an invalid field, we will receive an error:
-
-      iex> Trans.Translator.translate(article, :fake_attr, :es)
+      # If we request a translation for an invalid field, we will receive an error:
+      Trans.Translator.translate(article, :fake_attr, :es)
       ** (RuntimeError) 'Article' module must declare 'fake_attr'  as translatable
   """
   @spec translate(Trans.translatable(), atom, Trans.locale()) :: any
@@ -117,18 +107,19 @@ defmodule Trans.Translator do
   end
 
   @doc """
-  Translate a field into the given locale or raise if there is no translation.
+  Translate a single field into the given locale or raise if there is no translation.
 
-  Just like `translate/3` gets a translated field into the given locale. Raises iff there is no
+  Just like `translate/3` gets a translated field into the given locale. Raises if there is no
   translation availabe.
 
-  ## Usage example
+  ## Examples
 
-  If the requested locale is not available, we will receive an error:
+  Assuming the example article in this module:
 
-      iex> Trans.Translator.translate!(article, :title, :de)
+      Trans.Translator.translate!(article, :title, :de)
       ** (RuntimeError) translation doesn't exist for field ':title' in language 'de'
   """
+  @doc since: "2.3.0"
   @spec translate!(Trans.translatable(), atom, Trans.locale()) :: any
   def translate!(%{__struct__: module} = translatable, field, locale)
       when is_locale(locale) and is_atom(field) do

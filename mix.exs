@@ -16,13 +16,14 @@ defmodule Trans.Mixfile do
       app_list: app_list(Mix.env()),
       package: package(),
       deps: deps(),
+
       # Docs
       name: "Trans",
+      source_url: "https://github.com/crbelaus/trans",
+      homepage_url: "https://hex.pm/packages/trans",
       docs: [
         source_ref: "v#{@version}",
-        main: "Trans",
-        canonical: "https://hexdocs.pm/trans",
-        source_url: "https://github.com/crbelaus/trans"
+        main: "Trans"
       ]
     ]
   end

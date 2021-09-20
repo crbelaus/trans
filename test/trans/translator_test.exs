@@ -40,6 +40,19 @@ defmodule Trans.TranslatorTest do
         assert fr_comment.comment == original_comment.transcriptions["fr"]["comment"]
       end
     end
+
+    test "translate/2 falls back to the default locale if the translation does not exist",
+         %{article: article} do
+      de_article = translate(article, :de)
+
+      assert de_article.title == article.title
+      assert de_article.body == article.body
+
+      for {de_comment, index} <- Enum.with_index(de_article.comments) do
+        original_comment = Enum.at(de_article.comments, index)
+        assert de_comment.comment == original_comment.comment
+      end
+    end
   end
 
   describe "with free map translations" do

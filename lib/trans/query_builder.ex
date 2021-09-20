@@ -1,82 +1,80 @@
 if Code.ensure_loaded?(Ecto.Adapters.SQL) do
   defmodule Trans.QueryBuilder do
     @moduledoc """
-    Adds conditions to `Ecto` queries on translated fields.
+    Provides helpers for filtering translations in `Ecto.Queries`.
+
+    This module requires `Ecto.SQL` to be available during the compilation.
     """
 
     @doc """
     Generates a SQL fragment for accessing a translated field in an `Ecto.Query`.
 
-    The generated SQL fragment can be coupled with the rest of the functions and
-    operators provided by `Ecto.Query` and `Ecto.Query.API`.
+    The generated SQL fragment can be coupled with the rest of the functions and operators provided
+    by `Ecto.Query` and `Ecto.Query.API`.
 
     ## Safety
 
-    This macro will emit errors when used with untranslatable
-    schema modules or fields. Errors are emited during the compilation phase
-    thus avoiding runtime errors after the queries are built.
+    This macro will emit errors when used with untranslatable schema modules or fields. Errors are
+    emited during the compilation phase thus avoiding runtime errors after the queries are built.
 
-    ## Usage examples
+    ## Examples
 
-    Imagine that we have an _Article_ schema declared as follows:
+    Assuming the Article schema defined in
+    [Structured translations](Trans.html#module-structured-translations):
 
-        defmodule Article do
-          use Ecto.Schema
-          use Trans, translates: [:title, :body]
+        # Return all articles that have a Spanish translation
+        from a in Article, where: translated(Article, a, :es) != "null"
+        #=> SELECT a0."id", a0."title", a0."body", a0."translations"
+        #=> FROM "articles" AS a0
+        #=> WHERE a0."translations"->"es" != 'null'
 
-          schema "articles" do
-            field :title, :string
-            field :body, :string
-            field :translations, :map
-          end
-        end
+        # Query items with a certain translated value
+        from a in Article, where: translated(Article, a.title, :fr) == "Elixir"
+        #=> SELECT a0."id", a0."title", a0."body", a0."translations"
+        #=> FROM "articles" AS a0
+        #=> WHERE ((a0."translations"->"fr"->>"title") = "Elixir")
 
-    **Query for items that have a certain translation**
+        # Query items using a case insensitive comparison
+        from a in Article, where: ilike(translated(Article, a.body, :es), "%elixir%")
+        #=> SELECT a0."id", a0."title", a0."body", a0."translations"
+        #=> FROM "articles" AS a0
+        #=> WHERE ((a0."translations"->"es"->>"body") ILIKE "%elixir%")
 
-    This `Ecto.Query` will return all _Articles_ that have an Spanish translation:
+    ## Structured translations vs free-form translations
 
-        iex> Repo.all(from a in Article,
-        ...>   where: not is_nil(translated(Article, a, :es)))
+    The `Trans.QueryBuilder` works with both
+    [Structured translations](Trans.html#module-structured-translations)
+    and with [Free-form translations](Transl.html#module-free-form-translations).
 
-    The generated SQL is:
+    In most situations, the queries can be performed in the same way for both cases. **When querying
+    for data translated into a certain locale we must know wheter we are using structured or
+    free-form translations**.
 
-        SELECT a0."id", a0."title", a0."body", a0."translations"
-        FROM "articles" AS a0
-        WHERE (NOT ((a0."translations"->"es") IS NULL))
+    When using structured translations, the translations are saved as an embedded schema. This means
+    that **the locale keys will be always present even if there is no translation for that locale.**
+    In the database we have a `"null"` JSON value.
 
-    **Query for items with a certain translated value**
+        # If MyApp.Article uses structured translations
+        Repo.all(from a in MyApp.Article, where: translated(MyApp.Article, a, :es) != "null")
+        #=> SELECT a0."id", a0."title", a0."body", a0."translations"
+        #=> FROM "articles" AS a0
+        #=> WHERE (a0."translations"->"es") != 'null'
 
-    This query will return all articles whose French title matches the _"Elixir"_:
+    When using free-form translations, the translations are stored in a simple map. This means that
+    **the locale keys may be absent if there is no translation for that locale.** In the database we
+    have a `NULL` value.
 
-        iex> Repo.all(from a in Article,
-        ...>   where: translated(Article, a.title, :fr) == "Elixir")
+        # If MyApp.Article uses free-form translations
+        Repo.all(from a in MyApp.Article, where: not is_nil(translated(MyApp.Article, a, :es)))
+        #=> SELECT a0."id", a0."title", a0."body", a0."translations"
+        #=> FROM "articles" AS a0
+        #=> WHERE (NOT ((a0."translations"->"es") IS NULL))
 
-    The generated SQL is:
-
-        SELECT a0."id", a0."title", a0."body", a0."translations"
-        FROM "articles" AS a0
-        WHERE ((a0."translations"->"fr"->>"title") = "Elixir")
-
-    **Query for items using a case insensitive comparison**
-
-    This query will return all articles that contain "elixir" in their Spanish
-    body, igoring case.
-
-        iex> Repo.all(from a in Article,
-        ...> where: ilike(translated(Article, a.body, :es), "%elixir%"))
-
-    The generated SQL is:
-
-        SELECT a0."id", a0."title", a0."body", a0."translations"
-        FROM "articles" AS a0
-        WHERE ((a0."translations"->"es"->>"body") ILIKE "%elixir%")
-
-    **More complex queries**
+    ## More complex queries
 
     The `translated/3` macro can also be used with relations and joined schemas.
     For more complex examples take a look at the QueryBuilder tests (the file
-    is locaed in `test/query_builder_test.ex`).
-
+    is located in `test/trans/query_builder_test.ex`).
     """
     defmacro translated(module, translatable, locale) do
       with field <- field(translatable) do

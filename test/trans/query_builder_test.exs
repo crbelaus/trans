@@ -40,7 +40,7 @@ defmodule Trans.QueryBuilderTest do
     assert count == 0
   end
 
-  test "should use a custom translation container automaticalle",
+  test "should use a custom translation container automatically",
        %{translated_article: article} do
     with comment <- hd(article.comments) do
       matches =
