@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-# 2.3.0 - Unreleased
+# 2.3.0 - 2021-09-21
 - Update dependencies to avoid compilation warnings
 - Require Elixir 1.7 or newer
 - Migrate from CircleCI to GitHub Actions
