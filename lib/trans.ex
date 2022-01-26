@@ -17,6 +17,7 @@ defmodule Trans do
   * `:translates` (required) - list of the fields that will be translated.
   * `:container` (optional) - name of the field that contains the embedded translations.
     Defaults to`:translations`.
+  * `:default_locale` (optional) - declares the locale of the base untranslated column.
 
   ## Structured translations
 
@@ -25,7 +26,7 @@ defmodule Trans do
 
       defmodule MyApp.Article do
         use Ecto.Schema
-        use Trans, translates: [:title, :body]
+        use Trans, translates: [:title, :body], default_locale: :en
 
         schema "articles" do
           field :title, :string
@@ -65,7 +66,7 @@ defmodule Trans do
 
       defmodule MyApp.Article do
         use Ecto.Schema
-        use Trans, translates: [:title, :body]
+        use Trans, translates: [:title, :body], default_locale: :en
 
         schema "articles" do
           field :title, :string
@@ -98,6 +99,7 @@ defmodule Trans do
 
   * `__trans__(:fields)` - Returns the list of translatable fields.
   * `__trans__(:container)` - Returns the name of the translation container.
+  * `__trans__(:default_locale)` - Returns the name of default locale.
   """
 
   @typedoc """
@@ -114,6 +116,7 @@ defmodule Trans do
     quote do
       Module.put_attribute(__MODULE__, :trans_fields, unquote(translatable_fields(opts)))
       Module.put_attribute(__MODULE__, :trans_container, unquote(translation_container(opts)))
+      Module.put_attribute(__MODULE__, :trans_default_locale, unquote(translation_default_locale(opts)))
 
       @after_compile {Trans, :__validate_translatable_fields__}
       @after_compile {Trans, :__validate_translation_container__}
@@ -123,6 +126,9 @@ defmodule Trans do
 
       @spec __trans__(:container) :: atom
       def __trans__(:container), do: @trans_container
+
+      @spec __trans__(:default_locale) :: atom
+      def __trans__(:default_locale), do: @trans_default_locale
     end
   end
 
@@ -228,6 +234,13 @@ defmodule Trans do
     case Keyword.fetch(opts, :container) do
       :error -> :translations
       {:ok, container} -> container
+    end
+  end
+
+  defp translation_default_locale(opts) do
+    case Keyword.fetch(opts, :default_locale) do
+      :error -> nil
+      {:ok, default_locale} -> default_locale
     end
   end
 end

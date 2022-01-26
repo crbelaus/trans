@@ -23,6 +23,16 @@ defmodule TransTest do
     assert Article.__trans__(:container) == :translations
   end
 
+  test "the default locale" do
+    defmodule Book do
+      use Trans, translates: [:title, :body], default_locale: :en
+      defstruct title: "", body: "", translations: %{}
+    end
+
+    assert Book.__trans__(:default_locale) == :en
+    assert Article.__trans__(:default_locale) == nil
+  end
+
   test "returns the custom translation container name if specified" do
     assert Comment.__trans__(:container) == :transcriptions
   end
