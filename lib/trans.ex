@@ -112,6 +112,12 @@ defmodule Trans do
   """
   @type locale() :: String.t() | atom()
 
+  @typedoc """
+  When translating or querying either a single
+  locale or a list of locales can be provided
+  """
+  @type locale_list :: locale | [locale, ...]
+
   defmacro __using__(opts) do
     quote do
       Module.put_attribute(__MODULE__, :trans_fields, unquote(translatable_fields(opts)))

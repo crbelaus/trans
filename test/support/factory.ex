@@ -1,4 +1,4 @@
-alias Trans.Article
+alias Trans.{Article, Book}
 alias Trans.Comment
 alias Trans.Repo, as: Repo
 
@@ -26,6 +26,23 @@ defmodule Trans.Factory do
         fr: %Article.Translations.Fields{
           title: unique_string("Article title in French"),
           body: unique_string("Article body in French")
+        }
+      }
+    }
+  end
+
+  def build(:book) do
+    %Book{
+      title: unique_string("Book title in English"),
+      body: unique_string("Book body in English"),
+      translations: %Book.Translations{
+        es: %Book.Translations.Fields{
+          title: unique_string("Book title in Spanish"),
+          body: unique_string("Book body in Spanish")
+        },
+        fr: %Book.Translations.Fields{
+          title: unique_string("Book title in French"),
+          body: unique_string("Book body in French")
         }
       }
     }
