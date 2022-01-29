@@ -62,4 +62,9 @@ defmodule Trans.Factory do
   defp unique_string(string) do
     Enum.join([string, System.unique_integer()], " - ")
   end
+
+  # Return locales at runtime, dynamically
+  def locales(locales) do
+    locales
+  end
 end

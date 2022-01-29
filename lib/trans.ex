@@ -122,7 +122,12 @@ defmodule Trans do
     quote do
       Module.put_attribute(__MODULE__, :trans_fields, unquote(translatable_fields(opts)))
       Module.put_attribute(__MODULE__, :trans_container, unquote(translation_container(opts)))
-      Module.put_attribute(__MODULE__, :trans_default_locale, unquote(translation_default_locale(opts)))
+
+      Module.put_attribute(
+        __MODULE__,
+        :trans_default_locale,
+        unquote(translation_default_locale(opts))
+      )
 
       @after_compile {Trans, :__validate_translatable_fields__}
       @after_compile {Trans, :__validate_translation_container__}

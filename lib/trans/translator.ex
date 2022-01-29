@@ -162,14 +162,14 @@ defmodule Trans.Translator do
   end
 
   defp translate_field(%{__struct__: _module} = struct, locales, field, default_locale)
-      when is_list(locales) do
-    Enum.reduce_while locales, :error, fn locale, translated_field ->
+       when is_list(locales) do
+    Enum.reduce_while(locales, :error, fn locale, translated_field ->
       case translate_field(struct, locale, field, default_locale) do
         :error -> {:cont, translated_field}
         nil -> {:cont, translated_field}
         translation -> {:halt, translation}
       end
-    end
+    end)
   end
 
   defp translate_field(%{__struct__: _module} = struct, default_locale, field, default_locale) do
@@ -252,11 +252,11 @@ defmodule Trans.Translator do
   end
 
   defp no_translation_error(field, locales) when is_list(locales) do
-    "translation doesn't exist for field '#{inspect(field)}' in locales #{inspect locales}"
+    "translation doesn't exist for field '#{inspect(field)}' in locales #{inspect(locales)}"
   end
 
   defp no_translation_error(field, locale) do
-    "translation doesn't exist for field '#{inspect(field)}' in locale #{inspect locale}"
+    "translation doesn't exist for field '#{inspect(field)}' in locale #{inspect(locale)}"
   end
 
   defp not_translatable_error(module, field) do

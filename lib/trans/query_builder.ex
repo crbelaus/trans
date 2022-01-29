@@ -75,14 +75,31 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
     The `translated/3` macro can also be used with relations and joined schemas.
     For more complex examples take a look at the QueryBuilder tests (the file
     is located in `test/trans/query_builder_test.ex`).
+
     """
+
     defmacro translated(module, translatable, locale) do
+      static_locales? = static_locales?(locale)
+
       with field <- field(translatable) do
         module = Macro.expand(module, __CALLER__)
         validate_field(module, field)
-        generate_query(schema(translatable), module, field, locale)
+        generate_query(schema(translatable), module, field, locale, static_locales?)
       end
     end
+
+    @doc """
+    Generates a SQL fragment for accessing a translated field in an `Ecto.Query`
+    `select` clause and returning it aliased to the original field name.
+
+    Therefore, this macro returned a translated field with the name of the
+    table's base column name which means Ecto can load it into a struct
+    without further processing or conversion.
+
+    In practise it call the macro `translated/3` and wraps the result in a
+    fragment with the column alias.
+
+    """
 
     defmacro translated_as(module, translatable, locale) do
       field = field(translatable)
@@ -95,34 +112,28 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
     end
 
     defp translated_as(translated, field) do
-      {:fragment, [], ["? AS #{inspect to_string(field)}", translated]}
+      {:fragment, [], ["? AS #{inspect(to_string(field))}", translated]}
     end
 
-    defp generate_query(schema, module, nil, locales) when is_list(locales) do
+    defp generate_query(schema, module, field, locales, true = static_locales?)
+         when is_list(locales) do
       for locale <- locales do
-        generate_query(schema, module, nil, locale)
+        generate_query(schema, module, field, locale, static_locales?)
       end
       |> coalesce(locales)
     end
 
-    defp generate_query(schema, module, nil, locale) do
+    defp generate_query(schema, module, nil, locale, true = _static_locales?) do
       quote do
         fragment(
           "NULLIF((?->?),'null')",
           field(unquote(schema), unquote(module.__trans__(:container))),
-          ^to_string(unquote(locale))
+          unquote(to_string(locale))
         )
       end
     end
 
-    defp generate_query(schema, module, field, locales) when is_list(locales) do
-      for locale <- locales do
-        generate_query(schema, module, field, locale)
-      end
-      |> coalesce(locales)
-    end
-
-    defp generate_query(schema, module, field, locale) do
+    defp generate_query(schema, module, field, locale, true = _static_locales?) do
       if locale == module.__trans__(:default_locale) do
         quote do
           field(unquote(schema), unquote(field))
@@ -130,20 +141,86 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
       else
         quote do
           fragment(
-            "(?->?->>?)",
+            "COALESCE(?->?->>?, ?)",
             field(unquote(schema), unquote(module.__trans__(:container))),
             ^to_string(unquote(locale)),
-            ^to_string(unquote(field))
+            ^to_string(unquote(field)),
+            field(unquote(schema), unquote(field))
           )
         end
       end
     end
 
-    defp coalesce(ast, enum) do
-      placeholders = Enum.map(enum, fn _x -> "?" end) |> Enum.join(",")
-      fun = "COALESCE(" <> placeholders <> ")"
+    # Called at runtime - we use a database function
+    defp generate_query(schema, module, field, locales, false = _static_locales?) do
+      default_locale = to_string(module.__trans__(:default_locale) || :en)
+      translate_field(module, schema, field, default_locale, locales)
+    end
 
-      {:fragment, [], [fun | ast]}
+    defp translate_field(module, schema, nil, default_locale, locales) do
+      table_alias = table_alias(schema)
+
+      funcall =
+        "translate_field(#{table_alias}, ?::varchar, ?::varchar, ?::varchar[])"
+
+      quote do
+        fragment(
+          unquote(funcall),
+          ^to_string(unquote(module.__trans__(:container))),
+          ^to_string(unquote(default_locale)),
+          ^Trans.QueryBuilder.list_to_sql_array(unquote(locales))
+        )
+      end
+    end
+
+    defp translate_field(module, schema, field, default_locale, locales) do
+      table_alias = table_alias(schema)
+
+      funcall =
+        "translate_field(#{table_alias}, ?::varchar, ?::varchar, ?::varchar, ?::varchar[])"
+
+      quote do
+        fragment(
+          unquote(funcall),
+          ^to_string(unquote(module.__trans__(:container))),
+          ^to_string(unquote(field)),
+          ^to_string(unquote(default_locale)),
+          ^Trans.QueryBuilder.list_to_sql_array(unquote(locales))
+        )
+      end
+    end
+
+    @doc false
+    def list_to_sql_array(locales) do
+      locales
+      |> List.wrap()
+      |> Enum.map(&to_string/1)
+    end
+
+    defp coalesce(ast, enum) do
+      fun = "COALESCE(" <> fragment_placeholders(enum) <> ")"
+
+      quote do
+        fragment(unquote(fun), unquote_splicing(ast))
+      end
+    end
+
+    defp fragment_placeholders(enum) do
+      enum
+      |> Enum.map(fn _x -> "?" end)
+      |> Enum.join(",")
+    end
+
+    # Heuristic to guess the Ecto table alias name based upon
+    # the binding.  If the binding ends in a digit then we assume
+    # this is actually the table alias.  If it is not, append a `0`
+    # and treat it as the table alias.  This because its not
+    # possible to know the table alias at compile time.
+    @digits Enum.map(0..9, &to_string/1)
+
+    defp table_alias({schema, _, _}) do
+      schema = to_string(schema)
+      if String.ends_with?(schema, @digits), do: schema, else: schema <> "0"
     end
 
     defp schema({{:., _, [schema, _field]}, _metadata, _args}), do: schema
@@ -165,5 +242,13 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
           nil
       end
     end
+
+    defp static_locales?(locale) when is_atom(locale), do: true
+    defp static_locales?(locale) when is_binary(locale), do: true
+
+    defp static_locales?(locales) when is_list(locales),
+      do: Enum.all?(locales, &(is_atom(&1) || is_binary(&1)))
+
+    defp static_locales?(_locales), do: false
   end
 end

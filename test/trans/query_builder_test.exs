@@ -48,8 +48,7 @@ defmodule Trans.QueryBuilderTest do
         select: count(a.id)
       )
 
-    count =
-      Repo.one(query)
+    count = Repo.one(query)
 
     assert count == 1
   end
@@ -62,13 +61,12 @@ defmodule Trans.QueryBuilderTest do
         select: count(a.id)
       )
 
-    count =
-      Repo.one(query)
+    count = Repo.one(query)
 
     assert count == 0
   end
 
-  # This is an example where we us `NULLIF(value, 'null')` to
+  # This is an example where we use `NULLIF(value, 'null')` to
   # standardise on using SQL NULL in all cases where there is no data.
   test "that a valid locale that has no translations returns nil (not 'null')" do
     query =
@@ -78,76 +76,127 @@ defmodule Trans.QueryBuilderTest do
         select: count(a.id)
       )
 
+    count = Repo.one(query)
+
+    assert count == 2
+  end
+
+  test "that a valid locale that has no translations returns nil for locale chain" do
     count =
-      Repo.one(query)
+      Repo.one(
+        from(
+          a in Book,
+          where: is_nil(translated(Book, a, [:de, :it])),
+          select: count(translated(Book, a, [:de, :it]))
+        )
+      )
+
+    # Both rows return NULL and coun(column) doesn't unclude
+    # rows where is_null(column)
+    assert count == 0
+  end
+
+  test "that a valid locale that has no translations returns nil for dynamic locales" do
+    count =
+      Repo.one(
+        from(
+          a in Book,
+          where: is_nil(translated(Book, a, Trans.Factory.locales(:it))),
+          select: count(a.id)
+        )
+      )
 
     assert count == 2
   end
 
   test "should find all books falling back from DE since EN is default" do
-    query =
-      from(
-        a in Book,
-        where: not is_nil(translated(Book, a.title, [:de, :en])),
-        select: count(a.id)
-      )
-
     count =
-      Repo.one(query)
+      Repo.one(
+        from(
+          a in Book,
+          where: not is_nil(translated(Book, a.title, [:de, :en])),
+          select: count(a.id)
+        )
+      )
 
     assert count == 2
   end
 
-  test "should find all books falling back from DE since EN is default (using is_nil)" do
-    query =
-      from(
-        a in Book,
-        where: not is_nil(translated(Book, a.title, [:de, :en])),
-        select: count(a.id)
-      )
-
+  test "should find all books with dynamic fallback chain" do
     count =
-      Repo.one(query)
+      Repo.one(
+        from(
+          a in Book,
+          where: not is_nil(translated(Book, a0.title, Trans.Factory.locales([:it, :es]))),
+          select: count(a.id)
+        )
+      )
 
     assert count == 2
   end
 
-  test "select the translated (or base) column falling back from unknown DE to default EN" do
-    query =
-      from(
-        a in Book,
-        select: translated_as(Book, a.title, [:de, :en]),
-        where: not is_nil(a.title)
-      )
-
+  test "should select all books with dynamic fallback chain" do
     result =
-      Repo.all(query)
+      Repo.all(
+        from(
+          a in Book,
+          select: translated_as(Book, a.title, Trans.Factory.locales([:it, :es])),
+          where: not is_nil(translated(Book, a.title, Trans.Factory.locales([:it, :es])))
+        )
+      )
 
     assert length(result) == 2
   end
 
-  test "select translations for a valid locale with no data should return nil" do
-    query =
-      from(
-        a in Book,
-        select: translated_as(Book, a.title, :it)
+  test "should find all books falling back from DE since EN is default (using is_nil)" do
+    count =
+      Repo.one(
+        from(
+          a in Book,
+          where: not is_nil(translated(Book, a.title, [:de, :en])),
+          select: count(a.id)
+        )
       )
 
-    result =
-      Repo.all(query)
+    assert count == 2
+  end
 
-    assert result == [nil, nil]
+  test "select the translated (or base) column falling back from unknown DE to default EN",
+       %{translated_article: translated_article, untranslated_article: untranslated_article} do
+    result =
+      Repo.all(
+        from(
+          a in Book,
+          select: translated_as(Book, a.title, [:de, :en]),
+          where: not is_nil(translated(Book, a.title, [:de, :en]))
+        )
+      )
+
+    assert length(result) == 2
+    assert [translated_article.title, untranslated_article.title]
+  end
+
+  test "select translations for a valid locale with no data should return the default",
+       %{translated_article: translated_article, untranslated_article: untranslated_article} do
+    result =
+      Repo.all(
+        from(
+          a in Book,
+          select: translated_as(Book, a.title, :it)
+        )
+      )
+
+    assert result == [translated_article.title, untranslated_article.title]
   end
 
   test "select translations for a valid locale with no data should fallback to the default" do
-    query =
-      from(
-        a in Book,
-        select: translated_as(Book, a.title, [:it, :en])
-      )
-
     results =
-      Repo.all(query)
+      Repo.all(
+        from(
+          a in Book,
+          select: translated_as(Book, a.title, [:it, :en])
+        )
+      )
 
     for result <- results do
       assert result =~ "Article title in English"
@@ -197,6 +246,14 @@ defmodule Trans.QueryBuilderTest do
     assert count == 0
   end
 
+  # In the current released version this returns a count of 1 because
+  # it doesn't return the default value (the base column) when the
+  # article doesn't have a translated body. This would seem inconsistent
+  # with the documentation.
+  #
+  # This implementation returns the base column in all cases which
+  # I think is the original authors intent.
+
   test "should find an article by partial and case sensitive translation",
        %{translated_article: article} do
     first_words =
@@ -214,7 +271,7 @@ defmodule Trans.QueryBuilderTest do
         )
       )
 
-    assert Enum.count(matches) == 1
+    assert Enum.count(matches) == 2
     assert hd(matches).id == article.id
   end
 
@@ -240,6 +297,14 @@ defmodule Trans.QueryBuilderTest do
     assert count == 0
   end
 
+  # In the current released version this returns a count of 1 because
+  # it doesn't return the default value (the base column) when the
+  # article doesn't have a translated body. This would seem inconsistent
+  # with the documentation.
+  #
+  # This implementation returns the base column in all cases which
+  # I think is the original authors intent.
+
   test "should find an article by incorrect case using case insensitive translation",
        %{translated_article: article} do
     first_words =
@@ -250,15 +315,17 @@ defmodule Trans.QueryBuilderTest do
       |> String.upcase()
       |> Kernel.<>("%")
 
-    matches =
-      Repo.all(
-        from(
-          a in Article,
-          where: ilike(translated(Article, a.body, :fr), ^first_words)
-        )
+    query =
+      from(
+        a in Article,
+        where: ilike(translated(Article, a.body, :fr), ^first_words)
       )
 
-    assert Enum.count(matches) == 1
+    # IO.inspect Ecto.Adapters.SQL.to_sql(:all, Repo, query)
+
+    matches = Repo.all(query)
+
+    assert Enum.count(matches) == 2
     assert hd(matches).id == article.id
   end
 
@@ -332,6 +399,20 @@ defmodule Trans.QueryBuilderTest do
         from(
           a in Article,
           order_by: translated(Article, a.title, locale)
+        )
+      )
+
+    assert Enum.any?(articles)
+  end
+
+  test "should allow passing the locale from a function" do
+    locale = fn -> :es end
+
+    articles =
+      Repo.all(
+        from(
+          a in Article,
+          order_by: translated(Article, a.title, locale.())
         )
       )
 

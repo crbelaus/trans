@@ -121,10 +121,10 @@ defmodule Trans.TranslatorTest do
 
     test "translate/2 translates the whole book struct via a fallback chain",
          %{book: book} do
-     fr_book = translate(book, [:de, :fr, :en])
+      fr_book = translate(book, [:de, :fr, :en])
 
-     assert fr_book.title == book.translations.fr.title
-     assert fr_book.body == book.translations.fr.body
+      assert fr_book.title == book.translations.fr.title
+      assert fr_book.body == book.translations.fr.body
     end
 
     test "translate/2 translates the book to the default locale in a fallback chain",

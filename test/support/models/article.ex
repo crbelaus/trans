@@ -60,4 +60,3 @@ defmodule Trans.Article.Translations.Fields do
     |> validate_required([:title, :body])
   end
 end
-
