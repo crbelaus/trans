@@ -95,7 +95,7 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
     end
 
     defp translated_as(translated, field) do
-      {:fragment, [], ["? as #{inspect to_string(field)}", translated]}
+      {:fragment, [], ["? AS #{inspect to_string(field)}", translated]}
     end
 
     defp generate_query(schema, module, nil, locales) when is_list(locales) do
@@ -124,8 +124,9 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
 
     defp generate_query(schema, module, field, locale) do
       if locale == module.__trans__(:default_locale) do
-        base_field = quote(do: field(unquote(schema), unquote(field)))
-        coalesce([base_field, "null"],[??, ??])
+        quote do
+          field(unquote(schema), unquote(field))
+        end
       else
         quote do
           fragment(
