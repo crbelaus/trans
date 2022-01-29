@@ -84,6 +84,27 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
       end
     end
 
+    defmacro translated_as(module, translatable, locale) do
+      field = field(translatable)
+      translated = quote do: translated(unquote(module), unquote(translatable), unquote(locale))
+      translated_as(translated, field)
+    end
+
+    defp translated_as(translated, nil) do
+      translated
+    end
+
+    defp translated_as(translated, field) do
+      {:fragment, [], ["? as #{inspect to_string(field)}", translated]}
+    end
+
+    defp generate_query(schema, module, nil, locales) when is_list(locales) do
+      for locale <- locales do
+        generate_query(schema, module, nil, locale)
+      end
+      |> coalesce(locales)
+    end
+
     defp generate_query(schema, module, nil, locale) do
       quote do
         fragment(
@@ -94,21 +115,40 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
       end
     end
 
-    defp generate_query(schema, module, field, locale) do
-      quote do
-        fragment(
-          "(?->?->>?)",
-          field(unquote(schema), unquote(module.__trans__(:container))),
-          ^to_string(unquote(locale)),
-          ^unquote(field)
-        )
+    defp generate_query(schema, module, field, locales) when is_list(locales) do
+      for locale <- locales do
+        generate_query(schema, module, field, locale)
       end
+      |> coalesce(locales)
+    end
+
+    defp generate_query(schema, module, field, locale) do
+      if locale == module.__trans__(:default_locale) do
+        base_field = quote(do: field(unquote(schema), unquote(field)))
+        coalesce([base_field, "null"],[??, ??])
+      else
+        quote do
+          fragment(
+            "(?->?->>?)",
+            field(unquote(schema), unquote(module.__trans__(:container))),
+            ^to_string(unquote(locale)),
+            ^to_string(unquote(field))
+          )
+        end
+      end
+    end
+
+    defp coalesce(ast, enum) do
+      placeholders = Enum.map(enum, fn _x -> "?" end) |> Enum.join(",")
+      fun = "COALESCE(" <> placeholders <> ")"
+
+      {:fragment, [], [fun | ast]}
     end
 
     defp schema({{:., _, [schema, _field]}, _metadata, _args}), do: schema
     defp schema(schema), do: schema
 
-    defp field({{:., _, [_schema, field]}, _metadata, _args}), do: to_string(field)
+    defp field({{:., _, [_schema, field]}, _metadata, _args}), do: field
     defp field(_), do: nil
 
     defp validate_field(module, field) do

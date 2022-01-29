@@ -3,7 +3,7 @@ defmodule Trans.QueryBuilderTest do
 
   import Trans.QueryBuilder
 
-  alias Trans.{Article, Comment}
+  alias Trans.{Article, Book, Comment}
 
   setup do
     [
@@ -38,6 +38,90 @@ defmodule Trans.QueryBuilderTest do
       )
 
     assert count == 0
+  end
+
+  test "should find one article translated to ES falling back from DE" do
+    query =
+      from(
+        a in Article,
+        where: translated(Article, a, [:de, :es]) != "null",
+        select: count(a.id)
+      )
+
+    count =
+      Repo.one(query)
+
+    assert count == 1
+  end
+
+  test "should find no article translated to DE falling back from RU since neither exist" do
+    query =
+      from(
+        a in Article,
+        where: translated(Article, a, [:ru, :de]) != "null",
+        select: count(a.id)
+      )
+
+    count =
+      Repo.one(query)
+
+    assert count == 0
+  end
+
+  test "should find all books falling back from DE since EN is default" do
+    query =
+      from(
+        a in Book,
+        where: translated(Book, a.title, [:de, :en]) != "null",
+        select: count(a.id)
+      )
+
+    count =
+      Repo.one(query)
+
+    assert count == 2
+  end
+
+  test "select the translated (or base) column falling back from unknown DE to default EN" do
+    query =
+      from(
+        a in Book,
+        select: translated_as(Book, a.title, [:de, :en]),
+        where: a.title != "null"
+      )
+
+    result =
+      Repo.all(query)
+
+    assert length(result) == 2
+  end
+
+  test "select translations for a valid locale with no data should return nil" do
+    query =
+      from(
+        a in Book,
+        select: translated_as(Book, a.title, :it)
+      )
+
+    result =
+      Repo.all(query)
+
+    assert result == [nil, nil]
+  end
+
+  test "select translations for a valid locale with no data should fallback to the default" do
+    query =
+      from(
+        a in Book,
+        select: translated_as(Book, a.title, [:it, :en])
+      )
+
+    results =
+      Repo.all(query)
+
+    for result <- results do
+      assert result =~ "Article title in English"
+    end
   end
 
   test "should use a custom translation container automatically",
