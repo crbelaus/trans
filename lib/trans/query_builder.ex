@@ -108,7 +108,7 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
     defp generate_query(schema, module, nil, locale) do
       quote do
         fragment(
-          "(?->?)",
+          "NULLIF((?->?),'null')",
           field(unquote(schema), unquote(module.__trans__(:container))),
           ^to_string(unquote(locale))
         )

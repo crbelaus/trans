@@ -19,7 +19,7 @@ defmodule Trans.QueryBuilderTest do
       Repo.one(
         from(
           a in Article,
-          where: translated(Article, a, :es) != "null",
+          where: not is_nil(translated(Article, a, :es)),
           select: count(a.id)
         )
       )
@@ -44,7 +44,7 @@ defmodule Trans.QueryBuilderTest do
     query =
       from(
         a in Article,
-        where: translated(Article, a, [:de, :es]) != "null",
+        where: not is_nil(translated(Article, a, [:de, :es])),
         select: count(a.id)
       )
 
@@ -58,7 +58,7 @@ defmodule Trans.QueryBuilderTest do
     query =
       from(
         a in Article,
-        where: translated(Article, a, [:ru, :de]) != "null",
+        where: not is_nil(translated(Article, a, [:ru, :de])),
         select: count(a.id)
       )
 
@@ -68,11 +68,41 @@ defmodule Trans.QueryBuilderTest do
     assert count == 0
   end
 
+  # This is an example where we us `NULLIF(value, 'null')` to
+  # standardise on using SQL NULL in all cases where there is no data.
+  test "that a valid locale that has no translations returns nil (not 'null')" do
+    query =
+      from(
+        a in Book,
+        where: is_nil(translated(Book, a, :it)),
+        select: count(a.id)
+      )
+
+    count =
+      Repo.one(query)
+
+    assert count == 2
+  end
+
   test "should find all books falling back from DE since EN is default" do
     query =
       from(
         a in Book,
-        where: translated(Book, a.title, [:de, :en]) != "null",
+        where: not is_nil(translated(Book, a.title, [:de, :en])),
+        select: count(a.id)
+      )
+
+    count =
+      Repo.one(query)
+
+    assert count == 2
+  end
+
+  test "should find all books falling back from DE since EN is default (using is_nil)" do
+    query =
+      from(
+        a in Book,
+        where: not is_nil(translated(Book, a.title, [:de, :en])),
         select: count(a.id)
       )
 
@@ -87,7 +117,7 @@ defmodule Trans.QueryBuilderTest do
       from(
         a in Book,
         select: translated_as(Book, a.title, [:de, :en]),
-        where: a.title != "null"
+        where: not is_nil(a.title)
       )
 
     result =
