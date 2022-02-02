@@ -129,6 +129,8 @@ defmodule Trans do
         unquote(translation_default_locale(opts))
       )
 
+      import Trans, only: :macros
+
       @after_compile {Trans, :__validate_translatable_fields__}
       @after_compile {Trans, :__validate_translation_container__}
 
@@ -140,6 +142,55 @@ defmodule Trans do
 
       @spec __trans__(:default_locale) :: atom
       def __trans__(:default_locale), do: @trans_default_locale
+    end
+  end
+
+  @doc false
+  def default_trans_options do
+    [on_replace: :update, primary_key: false, build_field_schema: true]
+  end
+
+  defmacro translations(field_name, translation_module, locales, options \\ []) do
+    options = Keyword.merge(Trans.default_trans_options(), options)
+    {build_field_schema, options} = Keyword.pop(options, :build_field_schema)
+
+    quote do
+      if unquote(translation_module) && unquote(build_field_schema) do
+        @before_compile {Trans, :__build_embedded_schema__}
+      end
+
+      @translation_module Module.concat(__MODULE__, unquote(translation_module))
+
+      embeds_one unquote(field_name), unquote(translation_module), unquote(options) do
+        for locale_name <- List.wrap(unquote(locales)) do
+          embeds_one locale_name, unquote(translation_module).Fields, on_replace: :update
+        end
+      end
+    end
+  end
+
+  defmacro __build_embedded_schema__(env) do
+    translation_module = Module.get_attribute(env.module, :translation_module)
+    fields = Module.get_attribute(env.module, :trans_fields)
+
+    quote do
+      defmodule Module.concat(unquote(translation_module), :Fields) do
+        use Ecto.Schema
+        import Ecto.Changeset
+
+        @primary_key false
+        embedded_schema do
+          for a_field <- unquote(fields) do
+            field a_field, :string
+          end
+        end
+
+        def changeset(fields, params) do
+          fields
+          |> cast(params, unquote(fields))
+          |> validate_required(unquote(fields))
+        end
+      end
     end
   end
 

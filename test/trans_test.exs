@@ -50,4 +50,24 @@ defmodule TransTest do
                  "The field invalid_container used as the translation container is not defined in Elixir.TestArticle struct",
                  fn -> Code.eval_quoted(invalid_module) end
   end
+
+  test "translations/3 macro" do
+    assert :translations in Trans.Magazine.__schema__(:fields)
+
+    assert {
+      :parameterized, Ecto.Embedded,
+      %Ecto.Embedded{
+        cardinality: :one,
+        field: :translations,
+        on_cast: nil,
+        on_replace: :update,
+        ordered: true,
+        owner: Trans.Magazine,
+        related: Trans.Magazine.Translations,
+        unique: true}} =
+      Trans.Magazine.__schema__(:type, :translations)
+
+     assert [:es, :it, :de] = Trans.Magazine.Translations.__schema__(:fields)
+     assert [:title, :body] = Trans.Magazine.Translations.Fields.__schema__(:fields)
+  end
 end
