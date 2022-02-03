@@ -47,7 +47,7 @@ defmodule TransTest do
       end
 
     assert_raise ArgumentError,
-                 "The field invalid_container used as the translation container is not defined in Elixir.TestArticle struct",
+                 "The field invalid_container used as the translation container is not defined in TestArticle struct",
                  fn -> Code.eval_quoted(invalid_module) end
   end
 
