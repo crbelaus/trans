@@ -101,14 +101,14 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
 
               FOREACH locale IN ARRAY locales LOOP
                 IF locale = default_locale THEN
-                  RETURN j->field;
+                  RETURN j->>field;
                 ELSEIF c->locale IS NOT NULL THEN
                   IF c->locale->>field IS NOT NULL THEN
                     RETURN c->locale->>field;
                   END IF;
                 END IF;
               END LOOP;
-              RETURN j->field;
+              RETURN j->>field;
             END;
           $$;
           """
