@@ -1,4 +1,4 @@
-alias Trans.Article
+alias Trans.{Article, Book}
 alias Trans.Comment
 alias Trans.Repo, as: Repo
 
@@ -31,6 +31,23 @@ defmodule Trans.Factory do
     }
   end
 
+  def build(:book) do
+    %Book{
+      title: unique_string("Book title in English"),
+      body: unique_string("Book body in English"),
+      translations: %Book.Translations{
+        es: %Book.Translations.Fields{
+          title: unique_string("Book title in Spanish"),
+          body: unique_string("Book body in Spanish")
+        },
+        fr: %Book.Translations.Fields{
+          title: unique_string("Book title in French"),
+          body: unique_string("Book body in French")
+        }
+      }
+    }
+  end
+
   def build(:comment) do
     %Comment{
       comment: unique_string("Comment in English"),
@@ -44,5 +61,10 @@ defmodule Trans.Factory do
   # Adds a random suffix to the given string to make it unique.
   defp unique_string(string) do
     Enum.join([string, System.unique_integer()], " - ")
+  end
+
+  # Return locales at runtime, dynamically
+  def locales(locales) do
+    locales
   end
 end

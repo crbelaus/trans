@@ -9,7 +9,9 @@ defmodule Trans.Translator do
   * Checking that the given struct uses `Trans`
   * Automatically inferring the [translation container](Trans.html#module-translation-container)
     when needed.
-  * Falling back to the default value or raising if a translation does not exist.
+  * Falling back along a locale fallback chain (list of locales in which to look for
+    a translation). If not found, then return the default value or raise and exception if a
+    translation does not exist.
   * Translating entire structs.
 
   All examples in this module assume the following article, based on the schema defined in
@@ -51,18 +53,32 @@ defmodule Trans.Translator do
 
   Just like `translate/3`, falls back to the default locale if the translation does not exist:
 
-      # The Deutsch translation does not exist
+      # The Deutsch translation does not exist so the default values are returned
       article_de = Trans.Translator.translate(article, :de)
 
       article_de.title #=> "How to Write a Spelling Corrector"
       article_de.body #=> "A wonderful article by Peter Norvig"
+
+  Rather than just one locale, a list of locales (a locale fallback chain) can also be
+  used. In this case, translation tries each locale in the fallback chain in sequence
+  until a translation is found. If none is found, the default value is returned.
+
+      # The Deutsch translation does not exist but the Spanish one does
+      article_de = Trans.Translator.translate(article, [:de, :es])
+
+      article_de.title #=> "Cómo escribir un corrector ortográfico"
+      article_de.body #=> "Un artículo maravilloso de Peter Norvig"
   """
   @doc since: "2.3.0"
-  @spec translate(Trans.translatable(), Trans.locale()) :: Trans.translatable()
-  def translate(%{__struct__: module} = translatable, locale) when is_locale(locale) do
+  @spec translate(Trans.translatable(), Trans.locale_list()) :: Trans.translatable()
+
+  def translate(%{__struct__: module} = translatable, locale)
+      when is_locale(locale) or is_list(locale) do
     if Keyword.has_key?(module.__info__(:functions), :__trans__) do
+      default_locale = module.__trans__(:default_locale)
+
       translatable
-      |> translate_fields(locale)
+      |> translate_fields(locale, default_locale)
       |> translate_assocs(locale)
     else
       translatable
@@ -87,19 +103,25 @@ defmodule Trans.Translator do
       Trans.Translator.translate(article, :title, :de)
       "How to Write a Spelling Corrector"
 
+      # A fallback chain can also be used:
+      Trans.Translator.translate(article, :title, [:de, :es])
+      "Cómo escribir un corrector ortográfico"
+
       # If we request a translation for an invalid field, we will receive an error:
       Trans.Translator.translate(article, :fake_attr, :es)
       ** (RuntimeError) 'Article' module must declare 'fake_attr'  as translatable
   """
-  @spec translate(Trans.translatable(), atom, Trans.locale()) :: any
+  @spec translate(Trans.translatable(), atom, Trans.locale_list()) :: any
   def translate(%{__struct__: module} = translatable, field, locale)
-      when is_locale(locale) and is_atom(field) do
+      when (is_locale(locale) or is_list(locale)) and is_atom(field) do
+    default_locale = module.__trans__(:default_locale)
+
     unless Trans.translatable?(translatable, field) do
-      raise "'#{inspect(module)}' module must declare '#{inspect(field)}' as translatable"
+      raise not_translatable_error(module, field)
     end
 
     # Return the translation or fall back to the default value
-    case translate_field(translatable, locale, field) do
+    case translate_field(translatable, locale, field, default_locale) do
       :error -> Map.fetch!(translatable, field)
       nil -> Map.fetch!(translatable, field)
       translation -> translation
@@ -110,34 +132,51 @@ defmodule Trans.Translator do
   Translate a single field into the given locale or raise if there is no translation.
 
   Just like `translate/3` gets a translated field into the given locale. Raises if there is no
-  translation availabe.
+  translation available.
 
   ## Examples
 
   Assuming the example article in this module:
 
       Trans.Translator.translate!(article, :title, :de)
-      ** (RuntimeError) translation doesn't exist for field ':title' in language 'de'
+      ** (RuntimeError) translation doesn't exist for field ':title' in locale 'de'
   """
   @doc since: "2.3.0"
-  @spec translate!(Trans.translatable(), atom, Trans.locale()) :: any
+  @spec translate!(Trans.translatable(), atom, Trans.locale_list()) :: any
   def translate!(%{__struct__: module} = translatable, field, locale)
-      when is_locale(locale) and is_atom(field) do
+      when (is_locale(locale) or is_list(locale)) and is_atom(field) do
+    default_locale = module.__trans__(:default_locale)
+
     unless Trans.translatable?(translatable, field) do
-      raise "'#{inspect(module)}' module must declare '#{inspect(field)}' as translatable"
+      raise not_translatable_error(module, field)
     end
 
     # Return the translation or fall back to the default value
-    case translate_field(translatable, locale, field) do
+    case translate_field(translatable, locale, field, default_locale) do
       :error ->
-        raise "translation doesn't exist for field '#{inspect(field)}' in language '#{locale}'"
+        raise no_translation_error(field, locale)
 
       translation ->
         translation
     end
   end
 
-  defp translate_field(%{__struct__: module} = struct, locale, field) do
+  defp translate_field(%{__struct__: _module} = struct, locales, field, default_locale)
+       when is_list(locales) do
+    Enum.reduce_while(locales, :error, fn locale, translated_field ->
+      case translate_field(struct, locale, field, default_locale) do
+        :error -> {:cont, translated_field}
+        nil -> {:cont, translated_field}
+        translation -> {:halt, translation}
+      end
+    end)
+  end
+
+  defp translate_field(%{__struct__: _module} = struct, default_locale, field, default_locale) do
+    Map.fetch!(struct, field)
+  end
+
+  defp translate_field(%{__struct__: module} = struct, locale, field, _default_locale) do
     with {:ok, all_translations} <- Map.fetch(struct, module.__trans__(:container)),
          {:ok, translations_for_locale} <- get_translations_for_locale(all_translations, locale),
          {:ok, translated_field} <- get_translated_field(translations_for_locale, field) do
@@ -145,11 +184,11 @@ defmodule Trans.Translator do
     end
   end
 
-  defp translate_fields(%{__struct__: module} = struct, locale) do
+  defp translate_fields(%{__struct__: module} = struct, locale, default_locale) do
     fields = module.__trans__(:fields)
 
     Enum.reduce(fields, struct, fn field, struct ->
-      case translate_field(struct, locale, field) do
+      case translate_field(struct, locale, field, default_locale) do
         :error -> struct
         translation -> Map.put(struct, field, translation)
       end
@@ -210,5 +249,17 @@ defmodule Trans.Translator do
   # fallback to default behaviour
   defp get_translated_field(translations_for_locale, field) do
     Map.fetch(translations_for_locale, to_string(field))
+  end
+
+  defp no_translation_error(field, locales) when is_list(locales) do
+    "translation doesn't exist for field '#{inspect(field)}' in locales #{inspect(locales)}"
+  end
+
+  defp no_translation_error(field, locale) do
+    "translation doesn't exist for field '#{inspect(field)}' in locale #{inspect(locale)}"
+  end
+
+  defp not_translatable_error(module, field) do
+    "'#{inspect(module)}' module must declare '#{inspect(field)}' as translatable"
   end
 end

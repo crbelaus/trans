@@ -17,6 +17,7 @@ defmodule Trans do
   * `:translates` (required) - list of the fields that will be translated.
   * `:container` (optional) - name of the field that contains the embedded translations.
     Defaults to`:translations`.
+  * `:default_locale` (optional) - declares the locale of the base untranslated column.
 
   ## Structured translations
 
@@ -25,7 +26,7 @@ defmodule Trans do
 
       defmodule MyApp.Article do
         use Ecto.Schema
-        use Trans, translates: [:title, :body]
+        use Trans, translates: [:title, :body], default_locale: :en
 
         schema "articles" do
           field :title, :string
@@ -65,7 +66,7 @@ defmodule Trans do
 
       defmodule MyApp.Article do
         use Ecto.Schema
-        use Trans, translates: [:title, :body]
+        use Trans, translates: [:title, :body], default_locale: :en
 
         schema "articles" do
           field :title, :string
@@ -98,6 +99,7 @@ defmodule Trans do
 
   * `__trans__(:fields)` - Returns the list of translatable fields.
   * `__trans__(:container)` - Returns the name of the translation container.
+  * `__trans__(:default_locale)` - Returns the name of default locale.
   """
 
   @typedoc """
@@ -110,10 +112,24 @@ defmodule Trans do
   """
   @type locale() :: String.t() | atom()
 
+  @typedoc """
+  When translating or querying either a single
+  locale or a list of locales can be provided
+  """
+  @type locale_list :: locale | [locale, ...]
+
   defmacro __using__(opts) do
     quote do
       Module.put_attribute(__MODULE__, :trans_fields, unquote(translatable_fields(opts)))
       Module.put_attribute(__MODULE__, :trans_container, unquote(translation_container(opts)))
+
+      Module.put_attribute(
+        __MODULE__,
+        :trans_default_locale,
+        unquote(translation_default_locale(opts))
+      )
+
+      import Trans, only: :macros
 
       @after_compile {Trans, :__validate_translatable_fields__}
       @after_compile {Trans, :__validate_translation_container__}
@@ -123,6 +139,58 @@ defmodule Trans do
 
       @spec __trans__(:container) :: atom
       def __trans__(:container), do: @trans_container
+
+      @spec __trans__(:default_locale) :: atom
+      def __trans__(:default_locale), do: @trans_default_locale
+    end
+  end
+
+  @doc false
+  def default_trans_options do
+    [on_replace: :update, primary_key: false, build_field_schema: true]
+  end
+
+  defmacro translations(field_name, translation_module, locales, options \\ []) do
+    options = Keyword.merge(Trans.default_trans_options(), options)
+    {build_field_schema, options} = Keyword.pop(options, :build_field_schema)
+
+    quote do
+      if unquote(translation_module) && unquote(build_field_schema) do
+        @before_compile {Trans, :__build_embedded_schema__}
+      end
+
+      @translation_module Module.concat(__MODULE__, unquote(translation_module))
+
+      embeds_one unquote(field_name), unquote(translation_module), unquote(options) do
+        for locale_name <- List.wrap(unquote(locales)) do
+          embeds_one locale_name, unquote(translation_module).Fields, on_replace: :update
+        end
+      end
+    end
+  end
+
+  defmacro __build_embedded_schema__(env) do
+    translation_module = Module.get_attribute(env.module, :translation_module)
+    fields = Module.get_attribute(env.module, :trans_fields)
+
+    quote do
+      defmodule Module.concat(unquote(translation_module), :Fields) do
+        use Ecto.Schema
+        import Ecto.Changeset
+
+        @primary_key false
+        embedded_schema do
+          for a_field <- unquote(fields) do
+            field a_field, :string
+          end
+        end
+
+        def changeset(fields, params) do
+          fields
+          |> cast(params, unquote(fields))
+          |> validate_required(unquote(fields))
+        end
+      end
     end
   end
 
@@ -208,7 +276,7 @@ defmodule Trans do
     unless Enum.member?(Map.keys(module.__struct__()), container) do
       raise ArgumentError,
         message:
-          "The field #{container} used as the translation container is not defined in #{module} struct"
+          "The field #{container} used as the translation container is not defined in #{inspect module} struct"
     end
   end
 
@@ -228,6 +296,13 @@ defmodule Trans do
     case Keyword.fetch(opts, :container) do
       :error -> :translations
       {:ok, container} -> container
+    end
+  end
+
+  defp translation_default_locale(opts) do
+    case Keyword.fetch(opts, :default_locale) do
+      :error -> nil
+      {:ok, default_locale} -> default_locale
     end
   end
 end
