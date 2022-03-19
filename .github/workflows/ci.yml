@@ -48,7 +48,7 @@ jobs:
           path: |
             deps
             _build
-          key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix-${{ hashfiles("**/mix.lock") }}
+          key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix-${{ hashfiles('**/mix.lock') }}
       - name: Install dependencies
         run: |
           mix local.rebar --force
