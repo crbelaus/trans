@@ -45,7 +45,9 @@ jobs:
         uses: actions/cache@v2
         id: mix-cache
         with:
-          path: ["deps", "_build"]
+          path: |
+            deps
+            _build
           key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix-${{ hashfiles("**/mix.lock") }}
       - name: Install dependencies
         run: |
