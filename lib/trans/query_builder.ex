@@ -160,8 +160,7 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
     defp translate_field(module, schema, nil, default_locale, locales) do
       table_alias = table_alias(schema)
 
-      funcall =
-        "translate_field(#{table_alias}, ?::varchar, ?::varchar, ?::varchar[])"
+      funcall = "translate_field(#{table_alias}, ?::varchar, ?::varchar, ?::varchar[])"
 
       quote do
         fragment(

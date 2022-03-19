@@ -276,7 +276,9 @@ defmodule Trans do
     unless Enum.member?(Map.keys(module.__struct__()), container) do
       raise ArgumentError,
         message:
-          "The field #{container} used as the translation container is not defined in #{inspect module} struct"
+          "The field #{container} used as the translation container is not defined in #{
+            inspect(module)
+          } struct"
     end
   end
 

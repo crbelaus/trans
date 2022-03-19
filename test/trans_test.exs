@@ -55,19 +55,21 @@ defmodule TransTest do
     assert :translations in Trans.Magazine.__schema__(:fields)
 
     assert {
-      :parameterized, Ecto.Embedded,
-      %Ecto.Embedded{
-        cardinality: :one,
-        field: :translations,
-        on_cast: nil,
-        on_replace: :update,
-        ordered: true,
-        owner: Trans.Magazine,
-        related: Trans.Magazine.Translations,
-        unique: true}} =
-      Trans.Magazine.__schema__(:type, :translations)
+             :parameterized,
+             Ecto.Embedded,
+             %Ecto.Embedded{
+               cardinality: :one,
+               field: :translations,
+               on_cast: nil,
+               on_replace: :update,
+               ordered: true,
+               owner: Trans.Magazine,
+               related: Trans.Magazine.Translations,
+               unique: true
+             }
+           } = Trans.Magazine.__schema__(:type, :translations)
 
-     assert [:es, :it, :de] = Trans.Magazine.Translations.__schema__(:fields)
-     assert [:title, :body] = Trans.Magazine.Translations.Fields.__schema__(:fields)
+    assert [:es, :it, :de] = Trans.Magazine.Translations.__schema__(:fields)
+    assert [:title, :body] = Trans.Magazine.Translations.Fields.__schema__(:fields)
   end
 end
