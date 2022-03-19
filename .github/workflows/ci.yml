@@ -42,7 +42,7 @@ jobs:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
       - name: Retrieve dependencies cache
-        users: actions/cache@v2
+        uses: actions/cache@v2
         id: mix-cache
         with:
           path: ["deps", "_build"]
