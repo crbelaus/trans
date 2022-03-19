@@ -2,19 +2,12 @@ name: CI
 on: push
 env:
   MIX_ENV: test
+  ELIXIR_VERSION: 1.12
+  ERLANG_VERSION: 24
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - elixir: 1.7
-            otp: 21
-          - elixir: 1.12
-            otp: 24
 
     services:
       postgres:
@@ -39,8 +32,8 @@ jobs:
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: ${{ matrix.otp }}
-          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ env.ERLANG_VERSION }}
+          elixir-version: ${{ env.ELIXIR_VERSION }}
       - name: Retrieve dependencies cache
         uses: actions/cache@v2
         id: mix-cache
@@ -48,7 +41,7 @@ jobs:
           path: |
             deps
             _build
-          key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-mix-${{ hashfiles('**/mix.lock') }}
+          key: ${{ runner.os }}-erlang-${{ env.ERLANG_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-mix-${{ hashfiles('**/mix.lock') }}
       - name: Install dependencies
         run: |
           mix local.rebar --force
