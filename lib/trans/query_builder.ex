@@ -15,7 +15,7 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
     ## Safety
 
     This macro will emit errors when used with untranslatable schema modules or fields. Errors are
-    emited during the compilation phase thus avoiding runtime errors after the queries are built.
+    emitted during the compilation phase thus avoiding runtime errors after the queries are built.
 
     ## Examples
 
@@ -47,7 +47,7 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
     and with [Free-form translations](Transl.html#module-free-form-translations).
 
     In most situations, the queries can be performed in the same way for both cases. **When querying
-    for data translated into a certain locale we must know wheter we are using structured or
+    for data translated into a certain locale we must know whether we are using structured or
     free-form translations**.
 
     When using structured translations, the translations are saved as an embedded schema. This means

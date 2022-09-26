@@ -11,7 +11,7 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
     @moduledoc """
     Generates a migration to add a database function
     `translate_field` that uses the `Trans` structured
-    transaltion schema to resolve a translation for a field.
+    translation schema to resolve a translation for a field.
 
     """
 
