@@ -14,7 +14,7 @@ defmodule Trans.QueryBuilderTest do
 
   test "should find only one article translated to ES" do
     # Articles use nested structs for translations, this means that the translation container
-    # allways has the locale keys, but they are "null" if empty.
+    # always has the locale keys, but they are "null" if empty.
     count =
       Repo.one(
         from(
@@ -233,7 +233,7 @@ defmodule Trans.QueryBuilderTest do
     assert hd(matches).id == article.id
   end
 
-  test "should not find an article by a non existant translation" do
+  test "should not find an article by a non existent translation" do
     count =
       Repo.one(
         from(

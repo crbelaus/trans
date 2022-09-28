@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Use Elixir formatter
 
 # 2.0.3 - 2018-08-11
-- Update cannonical URLs to GitHub repository
+- Update canonical URLs to GitHub repository
 
 ## 2.0.2 - 2017-09-29
 - Support Elixir 1.5 and Erlant/OTP 20.

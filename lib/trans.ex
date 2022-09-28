@@ -77,7 +77,7 @@ defmodule Trans do
 
   Although they require less code, **free-form translations  provide much less guarantees**:
 
-  * There is no way to tell what content and wich form will be stored in the translations field.
+  * There is no way to tell what content and which form will be stored in the translations field.
   * Hard to integrate with HTML forms since the Phoenix helpers are not available.
   * Difficult navigation requiring the braces notation from the `Access` protocol.
 
