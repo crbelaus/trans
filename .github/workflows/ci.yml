@@ -10,8 +10,9 @@ jobs:
         include:
           - elixir: 1.7
             otp: 21
-          - elixir: 1.12
+          - elixir: 1.14
             otp: 24
+            lint: lint
 
     env:
       MIX_ENV: test
@@ -30,24 +31,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
         with:
           otp-version: ${{ matrix.otp }}
           elixir-version: ${{ matrix.elixir }}
+
       - name: Prepare test environment
-        run: |
-          cp config/test.ci.exs config/test.exs
+        run: cp config/test.ci.exs config/test.exs
+
       - name: Fetch and compile dependencies
         run: |
           mix deps.get
           mix deps.compile
+
       - name: Compile application
-        run: |
-          mix compile --warnings-as-erros
+        run: mix compile --warnings-as-erros
+        if: ${{ matrix.lint }}
+
       - name: Check format
-        run: |
-          mix format --check-formatted
+        run: mix format --check-formatted
+        if: ${{ matrix.lint }}
+
       - name: Run tests
-        run: |
-          mix test
+        run: mix test
