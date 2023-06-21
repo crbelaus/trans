@@ -8,10 +8,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: 1.7
-            otp: 21
-          - elixir: 1.12
-            otp: 24
+          - elixir: 1.11.4
+            otp: 24.3
 
     env:
       MIX_ENV: test
@@ -29,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
         with:
