@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 config :trans, Trans.Repo,
   username: "postgres",
