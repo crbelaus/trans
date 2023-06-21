@@ -229,6 +229,7 @@ defmodule Trans.Translator do
 
   # fallback to default behaviour
   defp get_translations_for_locale(nil, _locale), do: nil
+
   defp get_translations_for_locale(all_translations, locale) do
     Map.fetch(all_translations, to_string(locale))
   end
