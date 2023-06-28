@@ -5,7 +5,7 @@ defmodule Trans.TestCase do
 
   using do
     quote do
-      import Trans.{TestCase, Factory}
+      import Trans.TestCase
       import Ecto.Query
 
       alias Trans.Repo

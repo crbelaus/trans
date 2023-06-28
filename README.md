@@ -52,9 +52,9 @@ that is used by the `Trans.Translator` and `Trans.QueryBuilder` modules, which
 implement the main functionality of this library.
 
 
-## Quickstart
+## Setup and Quickstart
 
-Imagine that we have an `Article` schema that we want to translate:
+Let's say that we have an `Article` schema that contains texts in English and we want to translate it to other languages.
 
 ```elixir
 defmodule MyApp.Article do
@@ -67,7 +67,7 @@ defmodule MyApp.Article do
 end
 ```
 
-The first step would be to add a new JSON column to the table so we can store the translations in it.
+The first step would be to add a new JSONB column to the table so we can store the translations in it.
 
 ```elixir
 defmodule MyApp.Repo.Migrations.AddTranslationsToArticles do
@@ -81,37 +81,103 @@ defmodule MyApp.Repo.Migrations.AddTranslationsToArticles do
 end
 ```
 
-Once we have the new database column, we can update the Article schema to include the translations
+Once we have the new database column, we can update the Article schema to include the translations.
 
 ```elixir
 defmodule MyApp.Article do
   use Ecto.Schema
-  use Trans, translates: [:title, :body]
+  use Trans, translates: [:title, :body], default_locale: :en
 
   schema "articles" do
     field :title, :string
     field :body, :string
-    embeds_one :translations, Translations, on_replace: :update, primary_key: false do
-      embeds_one :es, MyApp.Article.Translation, on_replace: :update
-      embeds_one :fr, MyApp.Article.Translation, on_replace: :update
-    end
-  end
-end
 
-defmodule MyApp.Article.Translation do
-  use Ecto.Schema
-
-  @primary_key false
-  embedded_schema do
-    field :title, :string
-    field :body, :string
+    # This generates a MyApp.Article.Translations schema with a
+    # MyApp.Article.Translations.Fields for :es and :fr
+    translations [:es, :fr]
   end
 end
 ```
 
 After doing this we can leverage the [Trans.Translator](https://hexdocs.pm/trans/Trans.Translator.html) and [Trans.QueryBuilder](https://hexdocs.pm/trans/Trans.QueryBuilder.html) modules to fetch and query translations from the database.
 
-The translation storage can be done using normal `Ecto.Changeset` functions just like any other fields.
+The translation storage can be done using normal `Ecto.Changeset` functions just like it would be done for any other fields or associations.
+
+```elixir
+defmodule MyApp.Article do
+  def changeset(article, attrs \\ %{}) do
+    article
+    |> cast(attrs, [:title, :body])
+    |> validate_required([:title, :body])
+    |> cast_embed(:translations, with: &cast_translations/2)
+  end
+
+  defp cast_translations(translations, attrs \\ %{}) do
+    translations
+    |> cast(attrs, [])
+    |> cast_embed(:es)
+    |> cast_embed(:fr)
+  end
+end
+
+# Then, anywhere in your code:
+changeset = MyApp.Article.changeset(article, %{
+  translations: %{
+    es: %{title: "title ES", body: "body ES"},
+    fr: %{title: "title FR", body: "body FR"}
+  }
+})
+```
+
+## Customizing the translation container
+
+By default Trans looks for a `translations` field that contains the translations. This is known as the "translation container".
+
+You can override the default translation container passing the `container` option to Trans. In the following example the translations will be stored in the `transcriptions` field.
+
+```elixir
+defmodule MyApp.Article do
+  use Ecto.Schema
+  use Trans, translates: [:title, :body], default_locale: :en, container: :transcriptions
+
+  schema "articles" do
+    field :title, :string
+    field :body, :strings
+    translations [:es, :fr]
+  end
+end
+```
+
+## Customizing the translation schemas
+
+If you want to use your own translation module you can simply pass the `build_field_schema: false` option when using the `translations` macro.
+
+```elixir
+defmodule MyApp.Article do
+  use Ecto.Schema
+  use Trans, translates: [:title, :body], default_locale: :en
+
+  defmodule Translations.Fields do
+    use Ecto.Schema
+
+    embedded_schema do
+      field :title, :string
+      field :body, :string
+    end
+  end
+
+  schema "articles" do
+    field :title, :string
+    field :body, :string
+
+    translations [:es, :fr], build_field_schema: false
+  end
+end
+```
+
+## Translation fallback chains
+
+In certain cases you may want to resolve
 
 
 ## Is Trans dead?

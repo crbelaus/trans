@@ -1,7 +1,7 @@
 defmodule Trans.Mixfile do
   use Mix.Project
 
-  @version "2.3.0"
+  @version "3.0.0"
 
   def project do
     [
@@ -66,14 +66,12 @@ defmodule Trans.Mixfile do
 
   # Include Ecto and Postgrex applications in tests
   def app_list(:test), do: [:ecto, :postgrex]
-  def app_list(_), do: app_list()
-  def app_list, do: []
+  def app_list(_), do: []
 
   # Always compile files in "lib". In tests compile also files in
   # "test/support"
-  def elixirc_paths(:test), do: elixirc_paths() ++ ["test/support"]
-  def elixirc_paths(_), do: elixirc_paths()
-  def elixirc_paths, do: ["lib"]
+  def elixirc_paths(:test), do: ["lib", "test/support"]
+  def elixirc_paths(_), do: ["lib"]
 
   defp aliases do
     [

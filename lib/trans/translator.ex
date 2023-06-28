@@ -144,7 +144,7 @@ defmodule Trans.Translator do
   @doc since: "2.3.0"
   @spec translate!(Trans.translatable(), atom, Trans.locale_list()) :: any
   def translate!(%{__struct__: module} = translatable, field, locale)
-      when (is_locale(locale) or is_list(locale)) and is_atom(field) do
+      when is_locale(locale) and is_atom(field) do
     default_locale = module.__trans__(:default_locale)
 
     unless Trans.translatable?(translatable, field) do
@@ -152,12 +152,10 @@ defmodule Trans.Translator do
     end
 
     # Return the translation or fall back to the default value
-    case translate_field(translatable, locale, field, default_locale) do
-      :error ->
-        raise no_translation_error(field, locale)
-
-      translation ->
-        translation
+    if translation = translate_field(translatable, locale, field, default_locale) do
+      translation
+    else
+      raise no_translation_error(field, locale)
     end
   end
 

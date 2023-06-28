@@ -150,20 +150,47 @@ defmodule Trans do
     [on_replace: :update, primary_key: false, build_field_schema: true]
   end
 
-  defmacro translations(field_name, translation_module, locales, options \\ []) do
+  @doc """
+  Create the translation container and fields.
+
+  This macro creates a field named like the module's translation container to store the
+  translations. By default `YourModule.Translations` and `YourModule.Translations.Fields`
+  schemas will be created.
+
+  This macro creates an embedded field named after your "translation container" of type
+  `YourModule.Translations`. This field in turn has an embedded field for each locale
+  of type `YourModule.Translations.Fields`.
+
+  Calling:
+
+      translations [:en, :es]
+
+  Is equivalent to:
+
+      embeds_one :translations, Translations do
+        embeds_one :en, Fields
+        embeds_one :es, Fields
+      end
+
+  ## Options
+  - **build_field_schema (boolean / default: false)** wether to automatically generate the module for
+  locales or not. Set this to false if you want to customize how the field translations
+  are stored. Keep in mind that you must create a `YourModule.Translations.Fields` schema.
+  """
+  defmacro translations(locales, options \\ []) do
     options = Keyword.merge(Trans.default_trans_options(), options)
     {build_field_schema, options} = Keyword.pop(options, :build_field_schema)
 
     quote do
-      if unquote(translation_module) && unquote(build_field_schema) do
+      if unquote(build_field_schema) do
         @before_compile {Trans, :__build_embedded_schema__}
       end
 
-      @translation_module Module.concat(__MODULE__, unquote(translation_module))
+      @translation_module Module.concat(__MODULE__, Translations)
 
-      embeds_one unquote(field_name), unquote(translation_module), unquote(options) do
+      embeds_one @trans_container, Translations, unquote(options) do
         for locale_name <- List.wrap(unquote(locales)) do
-          embeds_one locale_name, unquote(translation_module).Fields, on_replace: :update
+          embeds_one locale_name, Module.concat([__MODULE__, Fields]), on_replace: :update
         end
       end
     end
@@ -174,7 +201,7 @@ defmodule Trans do
     fields = Module.get_attribute(env.module, :trans_fields)
 
     quote do
-      defmodule Module.concat(unquote(translation_module), :Fields) do
+      defmodule Module.concat(unquote(translation_module), Fields) do
         use Ecto.Schema
         import Ecto.Changeset
 
