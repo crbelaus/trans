@@ -73,6 +73,7 @@ defmodule Trans do
           field :title, :string
           field :body, :string
 
+          # Define MyApp.Article.Translations.Fields yourself
           translations [:es, :fr], build_field_schema: false
         end
       end
@@ -225,19 +226,14 @@ defmodule Trans do
 
   ## Examples
 
-  Assuming the Article schema defined in [Structured translations](#module-structued-translations).
+  Assuming the Article schema defined before.
 
   If we want to know whether a certain field is translatable or not we can use
-  this function as follows (we can also pass a struct instead of the module
-  name itself):
+  this function as follows:
 
       iex> Trans.translatable?(Article, :title)
       true
-
-  May be also used with translatable structs:
-
-      iex> article = %Article{}
-      iex> Trans.translatable?(article, :not_existing)
+      iex> Trans.translatable?(%Article{}, :not_existing)
       false
 
   Raises if the given module or struct does not use `Trans`:
@@ -247,7 +243,7 @@ defmodule Trans do
   """
   def translatable?(module_or_translatable, field)
 
-  @spec translatable?(module | translatable(), String.t() | atom) :: boolean
+  @spec translatable?(module | translatable(), locale()) :: boolean
   def translatable?(%{__struct__: module}, field), do: translatable?(module, field)
 
   def translatable?(module, field) when is_atom(module) and is_binary(field) do

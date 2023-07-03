@@ -19,7 +19,7 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
 
     ## Examples
 
-    Assuming the Article schema defined in [Trans](Trans.html):
+    Assuming the Article schema defined in [Trans](Trans.html#module-storing-translations):
 
         # Return all articles that have a Spanish translation
         from a in Article, where: translated(Article, a, :es) != "null"
@@ -81,7 +81,6 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
     fragment with the column alias.
 
     """
-
     defmacro translated_as(module, translatable, locale) do
       field = field(translatable)
       translated = quote do: translated(unquote(module), unquote(translatable), unquote(locale))
