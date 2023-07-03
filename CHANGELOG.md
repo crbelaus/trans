@@ -4,17 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-# 2.3.0 - 2021-09-21
+# 3.0.0 - 2023-07-03 (requires Elixir 1.11 or newer)
+
+- Remove support for unstructured translations
+- Add support for default locales and translation fallback chains
+- Return `nil` for unitialised embed in struct
+- Minor fixes, typos and dependency updates
+
+# 2.3.0 - 2021-09-21 (requires Elixir 1.7 or newer)
 - Update dependencies to avoid compilation warnings
-- Require Elixir 1.7 or newer
 - Migrate from CircleCI to GitHub Actions
 - Allow translating entire structs
 - Add translate!/3 function to raise if a translation does not exist
 - Allow saving translations into embedded_schemas
 - Improve docs
 
-# 2.2.0 - 2020-02-01
-- Require Elixir 1.6 or newer
+# 2.2.0 - 2020-02-01 (requires Elixir 1.6 or newer)
 - Enable locale to be passed as a string
 - Update ExDoc dependency
 - Remove Faker dependency

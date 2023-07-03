@@ -19,10 +19,9 @@ defmodule Trans do
     Defaults to`:translations`.
   * `:default_locale` (optional) - declares the locale of the base untranslated column.
 
-  ## Structured translations
+  ## Storing translations
 
-  Structured translations are the preferred and recommended way of using `Trans`. To use structured
-  translations **you must define the translations as embedded schemas**:
+  To store translations in a schema you must use the `translations` macro:
 
       defmodule MyApp.Article do
         use Ecto.Schema
@@ -32,37 +31,39 @@ defmodule Trans do
           field :title, :string
           field :body, :string
 
-          embeds_one :translations, Translations, on_replace: :update, primary_key: false do
-            embeds_one :es, MyApp.Article.Translation
-            embeds_one :fr, MyApp.Article.Translation
+          translations [:es, :fr]
+        end
+      end
+
+  This is equivalent to:
+
+      defmodule MyApp.Article do
+        use Ecto.Schema
+        use Trans, translates: [:title, :body], default_locale: :en
+
+        schema "articles" do
+          field :title, :string
+          field :body, :string
+
+          embeds_many :translations, Translations, primary_key: :false do
+            embeds_one :es, Fields
+            embeds_one :fr, Fields
           end
         end
       end
 
-      defmodule MyApp.Article.Translation do
+      defmodule MyApp.Article.Translations.Fields do
         use Ecto.Schema
 
-        @primary_key false
         embedded_schema do
           field :title, :string
           field :body, :string
         end
       end
 
-  Although they required more code than free-form translations, **structured translations provide
-  some nice benefits** that make them the preferred way of using `Trans`:
-
-  * High flexibility when making validations and transformation using the embedded schema's own
-    changeset.
-  * Easy to integrate with HTML forms leveraging the capabilities of `inputs_for`
-  * Easy navegability using the dot notation.
-
-  ## Free-form translations
-
-  Free-form translations were the main way of using `Trans` until the 2.3.0 version. They are still
-  supported for compatibility with older versions but not recommended for new projects.
-
-  To use free-form translations you must define the translations as a map:
+  If you want to customize the translation fields (for example how they are casted) you may define
+  them yourself manually. In such cases you may tell Trans not to generate the fields automatically
+  for you:
 
       defmodule MyApp.Article do
         use Ecto.Schema
@@ -71,15 +72,11 @@ defmodule Trans do
         schema "articles" do
           field :title, :string
           field :body, :string
-          field :translations, :map
+
+          # Define MyApp.Article.Translations.Fields yourself
+          translations [:es, :fr], build_field_schema: false
         end
       end
-
-  Although they require less code, **free-form translations  provide much less guarantees**:
-
-  * There is no way to tell what content and which form will be stored in the translations field.
-  * Hard to integrate with HTML forms since the Phoenix helpers are not available.
-  * Difficult navigation requiring the braces notation from the `Access` protocol.
 
   ## The translation container
 
@@ -150,20 +147,47 @@ defmodule Trans do
     [on_replace: :update, primary_key: false, build_field_schema: true]
   end
 
-  defmacro translations(field_name, translation_module, locales, options \\ []) do
+  @doc """
+  Create the translation container and fields.
+
+  This macro creates a field named like the module's translation container to store the
+  translations. By default `YourModule.Translations` and `YourModule.Translations.Fields`
+  schemas will be created.
+
+  This macro creates an embedded field named after your "translation container" of type
+  `YourModule.Translations`. This field in turn has an embedded field for each locale
+  of type `YourModule.Translations.Fields`.
+
+  Calling:
+
+      translations [:en, :es]
+
+  Is equivalent to:
+
+      embeds_one :translations, Translations do
+        embeds_one :en, Fields
+        embeds_one :es, Fields
+      end
+
+  ## Options
+  - **build_field_schema (boolean / default: false)** wether to automatically generate the module for
+  locales or not. Set this to false if you want to customize how the field translations
+  are stored and keep in mind that you must create a `YourModule.Translations.Fields` schema.
+  """
+  defmacro translations(locales, options \\ []) do
     options = Keyword.merge(Trans.default_trans_options(), options)
     {build_field_schema, options} = Keyword.pop(options, :build_field_schema)
 
     quote do
-      if unquote(translation_module) && unquote(build_field_schema) do
+      if unquote(build_field_schema) do
         @before_compile {Trans, :__build_embedded_schema__}
       end
 
-      @translation_module Module.concat(__MODULE__, unquote(translation_module))
+      @translation_module Module.concat(__MODULE__, Translations)
 
-      embeds_one unquote(field_name), unquote(translation_module), unquote(options) do
+      embeds_one @trans_container, Translations, unquote(options) do
         for locale_name <- List.wrap(unquote(locales)) do
-          embeds_one locale_name, unquote(translation_module).Fields, on_replace: :update
+          embeds_one locale_name, Module.concat([__MODULE__, Fields]), on_replace: :update
         end
       end
     end
@@ -174,7 +198,7 @@ defmodule Trans do
     fields = Module.get_attribute(env.module, :trans_fields)
 
     quote do
-      defmodule Module.concat(unquote(translation_module), :Fields) do
+      defmodule Module.concat(unquote(translation_module), Fields) do
         use Ecto.Schema
         import Ecto.Changeset
 
@@ -202,19 +226,14 @@ defmodule Trans do
 
   ## Examples
 
-  Assuming the Article schema defined in [Structured translations](#module-structued-translations).
+  Assuming the Article schema defined before.
 
   If we want to know whether a certain field is translatable or not we can use
-  this function as follows (we can also pass a struct instead of the module
-  name itself):
+  this function as follows:
 
       iex> Trans.translatable?(Article, :title)
       true
-
-  May be also used with translatable structs:
-
-      iex> article = %Article{}
-      iex> Trans.translatable?(article, :not_existing)
+      iex> Trans.translatable?(%Article{}, :not_existing)
       false
 
   Raises if the given module or struct does not use `Trans`:
@@ -224,7 +243,7 @@ defmodule Trans do
   """
   def translatable?(module_or_translatable, field)
 
-  @spec translatable?(module | translatable(), String.t() | atom) :: boolean
+  @spec translatable?(module | translatable(), locale()) :: boolean
   def translatable?(%{__struct__: module}, field), do: translatable?(module, field)
 
   def translatable?(module, field) when is_atom(module) and is_binary(field) do
@@ -276,9 +295,7 @@ defmodule Trans do
     unless Enum.member?(Map.keys(module.__struct__()), container) do
       raise ArgumentError,
         message:
-          "The field #{container} used as the translation container is not defined in #{
-            inspect(module)
-          } struct"
+          "The field #{container} used as the translation container is not defined in #{inspect(module)} struct"
     end
   end
 
@@ -303,8 +320,12 @@ defmodule Trans do
 
   defp translation_default_locale(opts) do
     case Keyword.fetch(opts, :default_locale) do
-      :error -> nil
-      {:ok, default_locale} -> default_locale
+      {:ok, default_locale} ->
+        default_locale
+
+      :error ->
+        raise ArgumentError,
+          message: "Trans requires a 'default_locale' option that contains the default locale"
     end
   end
 end

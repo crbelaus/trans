@@ -21,11 +21,11 @@ defmodule Trans.Translator do
         title: "How to Write a Spelling Corrector",
         body: "A wonderful article by Peter Norvig",
         translations: %MyApp.Article.Translations{
-          es: %MyApp.Article.Translation{
+          es: %MyApp.Article.Translations.Fields{
             title: "Cómo escribir un corrector ortográfico",
             body: "Un artículo maravilloso de Peter Norvig"
           },
-          fr: %MyApp.Article.Translation{
+          fr: %MyApp.Article.Translations.Fields{
              title: "Comment écrire un correcteur orthographique",
              body: "Un merveilleux article de Peter Norvig"
            }
@@ -144,7 +144,7 @@ defmodule Trans.Translator do
   @doc since: "2.3.0"
   @spec translate!(Trans.translatable(), atom, Trans.locale_list()) :: any
   def translate!(%{__struct__: module} = translatable, field, locale)
-      when (is_locale(locale) or is_list(locale)) and is_atom(field) do
+      when is_locale(locale) and is_atom(field) do
     default_locale = module.__trans__(:default_locale)
 
     unless Trans.translatable?(translatable, field) do
@@ -152,12 +152,10 @@ defmodule Trans.Translator do
     end
 
     # Return the translation or fall back to the default value
-    case translate_field(translatable, locale, field, default_locale) do
-      :error ->
-        raise no_translation_error(field, locale)
-
-      translation ->
-        translation
+    if translation = translate_field(translatable, locale, field, default_locale) do
+      translation
+    else
+      raise no_translation_error(field, locale)
     end
   end
 
@@ -229,6 +227,7 @@ defmodule Trans.Translator do
 
   # fallback to default behaviour
   defp get_translations_for_locale(nil, _locale), do: nil
+
   defp get_translations_for_locale(all_translations, locale) do
     Map.fetch(all_translations, to_string(locale))
   end
