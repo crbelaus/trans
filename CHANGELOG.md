@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-# 3.0.0 - 2023-06-29 (requires Elixir 1.11 or newer)
+# 3.0.0 - 2023-07-03 (requires Elixir 1.11 or newer)
 
 - Remove support for unstructured translations
 - Add support for default locales and translation fallback chains
