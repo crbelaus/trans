@@ -19,10 +19,9 @@ defmodule Trans do
     Defaults to`:translations`.
   * `:default_locale` (optional) - declares the locale of the base untranslated column.
 
-  ## Structured translations
+  ## Storing translations
 
-  Structured translations are the preferred and recommended way of using `Trans`. To use structured
-  translations **you must define the translations as embedded schemas**:
+  To store translations in a schema you must use the `translations` macro:
 
       defmodule MyApp.Article do
         use Ecto.Schema
@@ -32,37 +31,39 @@ defmodule Trans do
           field :title, :string
           field :body, :string
 
-          embeds_one :translations, Translations, on_replace: :update, primary_key: false do
-            embeds_one :es, MyApp.Article.Translation
-            embeds_one :fr, MyApp.Article.Translation
+          translations [:es, :fr]
+        end
+      end
+
+  This is equivalent to:
+
+      defmodule MyApp.Article do
+        use Ecto.Schema
+        use Trans, translates: [:title, :body], default_locale: :en
+
+        schema "articles" do
+          field :title, :string
+          field :body, :string
+
+          embeds_many :translations, Translations, primary_key: :false do
+            embeds_one :es, Fields
+            embeds_one :fr, Fields
           end
         end
       end
 
-      defmodule MyApp.Article.Translation do
+      defmodule MyApp.Article.Translations.Fields do
         use Ecto.Schema
 
-        @primary_key false
         embedded_schema do
           field :title, :string
           field :body, :string
         end
       end
 
-  Although they required more code than free-form translations, **structured translations provide
-  some nice benefits** that make them the preferred way of using `Trans`:
-
-  * High flexibility when making validations and transformation using the embedded schema's own
-    changeset.
-  * Easy to integrate with HTML forms leveraging the capabilities of `inputs_for`
-  * Easy navegability using the dot notation.
-
-  ## Free-form translations
-
-  Free-form translations were the main way of using `Trans` until the 2.3.0 version. They are still
-  supported for compatibility with older versions but not recommended for new projects.
-
-  To use free-form translations you must define the translations as a map:
+  If you want to customize the translation fields (for example how they are casted) you may define
+  them yourself manually. In such cases you may tell Trans not to generate the fields automatically
+  for you:
 
       defmodule MyApp.Article do
         use Ecto.Schema
@@ -71,15 +72,10 @@ defmodule Trans do
         schema "articles" do
           field :title, :string
           field :body, :string
-          field :translations, :map
+
+          translations [:es, :fr], build_field_schema: false
         end
       end
-
-  Although they require less code, **free-form translations  provide much less guarantees**:
-
-  * There is no way to tell what content and which form will be stored in the translations field.
-  * Hard to integrate with HTML forms since the Phoenix helpers are not available.
-  * Difficult navigation requiring the braces notation from the `Access` protocol.
 
   ## The translation container
 
@@ -175,7 +171,7 @@ defmodule Trans do
   ## Options
   - **build_field_schema (boolean / default: false)** wether to automatically generate the module for
   locales or not. Set this to false if you want to customize how the field translations
-  are stored. Keep in mind that you must create a `YourModule.Translations.Fields` schema.
+  are stored and keep in mind that you must create a `YourModule.Translations.Fields` schema.
   """
   defmacro translations(locales, options \\ []) do
     options = Keyword.merge(Trans.default_trans_options(), options)

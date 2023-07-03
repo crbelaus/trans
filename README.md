@@ -175,10 +175,6 @@ defmodule MyApp.Article do
 end
 ```
 
-## Translation fallback chains
-
-In certain cases you may want to resolve
-
 
 ## Is Trans dead?
 

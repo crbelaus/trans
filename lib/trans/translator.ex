@@ -21,11 +21,11 @@ defmodule Trans.Translator do
         title: "How to Write a Spelling Corrector",
         body: "A wonderful article by Peter Norvig",
         translations: %MyApp.Article.Translations{
-          es: %MyApp.Article.Translation{
+          es: %MyApp.Article.Translations.Fields{
             title: "Cómo escribir un corrector ortográfico",
             body: "Un artículo maravilloso de Peter Norvig"
           },
-          fr: %MyApp.Article.Translation{
+          fr: %MyApp.Article.Translations.Fields{
              title: "Comment écrire un correcteur orthographique",
              body: "Un merveilleux article de Peter Norvig"
            }

@@ -19,8 +19,7 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
 
     ## Examples
 
-    Assuming the Article schema defined in
-    [Structured translations](Trans.html#module-structured-translations):
+    Assuming the Article schema defined in [Trans](Trans.html):
 
         # Return all articles that have a Spanish translation
         from a in Article, where: translated(Article, a, :es) != "null"
@@ -40,44 +39,26 @@ if Code.ensure_loaded?(Ecto.Adapters.SQL) do
         #=> FROM "articles" AS a0
         #=> WHERE ((a0."translations"->"es"->>"body") ILIKE "%elixir%")
 
-    ## Structured translations vs free-form translations
+    ## Fallback chains
 
-    The `Trans.QueryBuilder` works with both
-    [Structured translations](Trans.html#module-structured-translations)
-    and with [Free-form translations](Transl.html#module-free-form-translations).
+    Just like when using `Trans.Translator.translate/2` you may also pass a list of locales. In
+    that case the query will automatically fall back through the list of provided locales until
+    it finds an existing translation.
 
-    In most situations, the queries can be performed in the same way for both cases. **When querying
-    for data translated into a certain locale we must know whether we are using structured or
-    free-form translations**.
+        # Query items translated into FR or ES (if FR translation does not exist)
+        from a in Article, where: not is_nil(translated(Article, a.body, [:fr, :es]))
 
-    When using structured translations, the translations are saved as an embedded schema. This means
-    that **the locale keys will be always present even if there is no translation for that locale.**
-    In the database we have a `"null"` JSON value.
+    If you plan to use fallback chains in the database you will need to set up the Trans DB
+    translation functions.
 
-        # If MyApp.Article uses structured translations
-        Repo.all(from a in MyApp.Article, where: translated(MyApp.Article, a, :es) != "null")
-        #=> SELECT a0."id", a0."title", a0."body", a0."translations"
-        #=> FROM "articles" AS a0
-        #=> WHERE (a0."translations"->"es") != 'null'
-
-    When using free-form translations, the translations are stored in a simple map. This means that
-    **the locale keys may be absent if there is no translation for that locale.** In the database we
-    have a `NULL` value.
-
-        # If MyApp.Article uses free-form translations
-        Repo.all(from a in MyApp.Article, where: not is_nil(translated(MyApp.Article, a, :es)))
-        #=> SELECT a0."id", a0."title", a0."body", a0."translations"
-        #=> FROM "articles" AS a0
-        #=> WHERE (NOT ((a0."translations"->"es") IS NULL))
+        mix do trans.gen.translate_function, ecto.migrate
 
     ## More complex queries
 
     The `translated/3` macro can also be used with relations and joined schemas.
     For more complex examples take a look at the QueryBuilder tests (the file
     is located in `test/trans/query_builder_test.ex`).
-
     """
-
     defmacro translated(module, translatable, locale) do
       static_locales? = static_locales?(locale)
 
