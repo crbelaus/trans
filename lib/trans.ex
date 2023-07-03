@@ -320,8 +320,12 @@ defmodule Trans do
 
   defp translation_default_locale(opts) do
     case Keyword.fetch(opts, :default_locale) do
-      :error -> nil
-      {:ok, default_locale} -> default_locale
+      {:ok, default_locale} ->
+        default_locale
+
+      :error ->
+        raise ArgumentError,
+          message: "Trans requires a 'default_locale' option that contains the default locale"
     end
   end
 end
