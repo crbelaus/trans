@@ -44,6 +44,12 @@ defmodule Trans.TranslatorTest do
 
       assert translated.content == struct.content
     end
+
+    test "falls back to the default locale if translation does not exist", %{struct: struct} do
+      translated = Translator.translate(struct, :fr)
+
+      assert translated.content == struct.content
+    end
   end
 
   describe inspect(&Translator.translate/3) do
