@@ -182,7 +182,7 @@ defmodule Trans.Translator do
     end
   end
 
-  defp translate_fields(%{__struct__: module} = struct, locale, default_locale) do
+  defp translate_fields(%{__struct__: module} = struct, locale, default_locale) when is_list(locale) do
     fields = module.__trans__(:fields)
 
     Enum.reduce(fields, struct, fn field, struct ->
@@ -191,6 +191,10 @@ defmodule Trans.Translator do
         translation -> Map.put(struct, field, translation)
       end
     end)
+  end
+
+  defp translate_fields(%{__struct__: module} = struct, locale, default_locale) do
+    translate_fields(struct, [locale], default_locale)
   end
 
   defp translate_assocs(%{__struct__: module} = struct, locale) do
