@@ -1,3 +1,7 @@
+> [!IMPORTANT]
+> **As of June 2026 this project is deprecated in favour of [@kipcole9](https://github.com/kipcole9)'s [localize_translate](https://github.com/elixir-localize/localize_translate) library.** Translating values from the database is just a small part in the overall localization goal, and localize_translate integrates beautifully with the rest of the [localize](https://github.com/elixir-localize) ecosystem.
+> The API surface of both libraries is almost identical, so the migration should be very straightforward.
+
 # Trans
 
 [![Tests](https://github.com/crbelaus/trans/actions/workflows/ci.yml/badge.svg)](https://github.com/crbelaus/trans/actions/workflows/ci.yml/badge.svg)
